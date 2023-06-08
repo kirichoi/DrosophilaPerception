@@ -21,13 +21,13 @@ Below is a short description of what each files and folders contain:
 - *run_concentration.py*: the Python script to perform analysis on natural odor mixtures and odorants at various concentrations.
 - *check_connectivity.py*: the Python script to plot connectivity matrices and perform condition tests.
 - *import_neuprint.py*: the Python script that querys the neurons and connectivities from the neuPrint database.
-- *data*: 
+- *data/*: 
 	- *Hallem_and_Carlson_2006_TS1.xlsx*: single odorant activity profiles translated from [Hallem and Carlson 2006](https://www.cell.com/fulltext/S0092-8674(06)00363-1).
 	- *Hallem_and_Carlson_2006_TS2.xlsx*: odor mixture and concentration-dependent activity profiles translated from [Hallem and Carlson 2006](https://www.cell.com/fulltext/S0092-8674(06)00363-1).
     - *PNKC_df.pkl*: a pickled dataframe listing uPNs that project to MB calyx.
     - *MBON_df.pkl*: a pickled dataframe listing MBONs.
-    - *neuron_PNKC_df*: a pickled dataframe listing uPNs and KCs with connections.
-    - *conn_PNKC_df*: a pickled dataframe listing connectivity between uPNs and KCs.
-	- *neuron_MBON_df*: a pickled dataframe listing KCs and MBONs with connections.
-    - *conn_MBON_df*: a pickled dataframe listing connectivity between KCs and MBONs.
+    - *neuron_PNKC_df.pkl*: a pickled dataframe listing uPNs and KCs with connections.
+    - *conn_PNKC_df.pkl*: a pickled dataframe listing connectivity between uPNs and KCs.
+	- *neuron_MBON_df.pkl*: a pickled dataframe listing KCs and MBONs with connections.
+    - *conn_MBON_df.pkl*: a pickled dataframe listing connectivity between KCs and MBONs.
 - *precalc/*: a folder containing pre-computed outputs for a number of computations that take a long time. The scripts prioritize using these pre-computed outputs but this behavior can be overiden by **LOAD** flag to re-run everything. ***WARNING -- THIS CAN TAKE A VERY LONG TIME!***
