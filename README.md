@@ -1,6 +1,6 @@
 # DrosophilaPerception
 
-A repository containinng the scripts and data to reproduce the results presented in the manuscript titled
+A repository containinng the scripts and data to reproduce the results presented in the manuscript titled **_Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing_**
 
 Copyright 2023 Kiri Choi
 
@@ -17,10 +17,11 @@ A part of these datasets is reproduced in the repository which are necessary to 
 For these datasets, we would like to credit all the respective original authors.
 Below is a short description of what each files and folders contain:
 
-- *run_single.py*: the Python script to perform analysis on single naturalistic odorants and random odor mixtures.
-- *run_concentration.py*: the Python script to perform analysis on natural odor mixtures and odorants at various concentrations.
-- *check_connectivity.py*: the Python script to plot connectivity matrices and perform condition tests.
-- *import_neuprint.py*: the Python script that querys the neurons and connectivities from the neuPrint database.
+- *run_single.py*: Python script to perform analysis on single naturalistic odorants and random odor mixtures.
+- *run_concentration.py*: Python script to perform analysis on natural odor mixtures and odorants at various concentrations.
+- *run_MBON_raw.py*: Python script to perform analysis on raw MBON response profiles including PCA, t-SNE, etc.
+- *check_connectivity.py*: Python script to plot connectivity matrices and perform condition tests.
+- *import_neuprint.py*: Python script that querys the neurons and connectivities from the neuPrint database.
 - *data/*: 
 	- *Hallem_and_Carlson_2006_TS1.xlsx*: single odorant activity profiles translated from [Hallem and Carlson 2006](https://www.cell.com/fulltext/S0092-8674(06)00363-1).
 	- *Hallem_and_Carlson_2006_TS2.xlsx*: odor mixture and concentration-dependent activity profiles translated from [Hallem and Carlson 2006](https://www.cell.com/fulltext/S0092-8674(06)00363-1).
