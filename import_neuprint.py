@@ -5,10 +5,10 @@
 # Seoul 02455, Korea
 #
 # This script queries neurons and fetches connections bewteen PNs, KCs, and 
-# MBONs from the hemibrain dataset 
+# MBONs from the hemibrain dataset.
 # The script will pull data from the hemibrain dataset.
 # CAUTION! - THIS CAN TAKE A LONG TIME!
-# Using the pickled files instead are highly recommended.
+# Usage of the pickled files are highly recommended.
 #
 #
 # ENTER YOUR PERSONAL TOKEN HERE ##############################################

@@ -5,6 +5,9 @@
 # Seoul 02455, Korea
 #
 # This script reproduces figures in the manuscript titled
+#
+# Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing
+#
 # Figures related to connectivity matrices and CS condition tests are available
 # from this Python script.
 
@@ -100,7 +103,7 @@ for i in np.sort(matrix_MBON.columns.values):
 MBON_newidx_label = np.array(MBONtype)[MBONbid_idx][matrix_MBONKCidx]
 
 
-#%% Supplementary Figure S7 - PN-KC connectivity matrix
+#%% Supplementary Figure S1 - PN-KC connectivity matrix
 
 fig, ax = plt.subplots(figsize=(10,20))
 ax.set_yticks([])
@@ -113,7 +116,7 @@ plt.xticks(np.arange(len(KC_newidx_label)), np.array(KC_newidx_label), rotation=
 plt.show()
 
 
-#%% Supplementary Figure S8 - KC-MBON connectivity matrix
+#%% Supplementary Figure S2 - KC-MBON connectivity matrix
 
 fig, ax = plt.subplots(figsize=(5,10))
 ax.set_yticks([])
@@ -125,14 +128,14 @@ ax.yaxis.set_label_position('left')
 plt.xticks(np.arange(len(MBON_newidx_label)), np.array(MBON_newidx_label), rotation='vertical', fontsize=5)
 plt.show()
 
-#%% Supplementary Figure S9A - Sparsity vs dimension m
+#%% Supplementary Figure S4A - Sparsity vs dimension m
 
 sparsity = np.arange(2, 100)
 
 fig = plt.figure(figsize=(4,3))
 plt.plot(sparsity, sparsity*np.log(np.shape(matrix_KC)[0]/sparsity))
 plt.hlines(np.shape(matrix_MBONKC)[1], 0, 100, ls='--', color='k')
-plt.text(20, 30, r'$Klog(\frac{n}{K}), n=119$', color='tab:blue', fontsize=15)
+plt.text(20, 30, r'$K\mathrm{log}(\frac{n}{K}), n=119$', color='tab:blue', fontsize=15)
 plt.text(20, 58, r'$m=56$', color='k', fontsize=15)
 plt.xlabel('Sparsity $K$', fontsize=15)
 plt.ylabel(r'$m$', fontsize=15)
@@ -143,7 +146,7 @@ plt.ylim(0, 70)
 plt.show()
 
 
-#%% Supplementary Figure S9B - Relaxed coherence
+#%% Supplementary Figure S4B - Relaxed coherence
 
 Smat = np.zeros(np.shape(matrix_MBONKC.T))
 

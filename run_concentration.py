@@ -5,6 +5,9 @@
 # Seoul 02455, Korea
 #
 # This script reproduces figures in the manuscript titled
+#
+# Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing
+#
 # Figures related to uPN activity reconstruction in response to natural odor
 # mixtures (fruits) and odorants at various concentrations are presetned in 
 # this Python script.
@@ -448,18 +451,19 @@ for o in natural_odor_type:
     natural_allsingleres.append(res.x)
 
 
-natural_single_L2_error1 = []
+conc_single_residuals = []
     
 for l,i in enumerate(natural_allsingleres):
-    L2_error_temp = []
+    rh_temp = []
     for k,j in enumerate(natural_singleinput):
         gidx = np.where(np.abs(natural_allsingletruPNactivity[k]) >= 40)[0]
-        L2_error_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
-    natural_single_L2_error1.append(L2_error_temp)
-
+        rh_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
+    conc_single_residuals.append(rh_temp)
 
 
 #%% Figure 5A - Sparsity comparison between natural fruit odor mixtures and random mixtures
+
+mp = 27
 
 singlecosine = np.load('./precalc/singlecosine.npy')
 single_residuals = np.load('./precalc/single_residuals.npy')
@@ -559,6 +563,7 @@ for i,j in enumerate(natural_PNsparsity[9:18]):
     else:
         plt.hlines(j, 0, 15, color=cmap2(i/9), ls='--', zorder=i)
         plt.text(16, j-.015, unu[i], fontsize=12, color=cmap2(i/9))
+plt.hlines(mp, 0, 15, color='k', ls='dotted')
 plt.scatter(np.arange(2,15), synthetic_PNsparsity_mean, zorder=9, c='tab:red')
 plt.errorbar(np.arange(2,15), synthetic_PNsparsity_mean, yerr=synthetic_PNsparsity_std, zorder=9, c='tab:red')
 plt.scatter([1], np.mean(natural_sparsity_hallem), color='tab:red', marker='*', s=100, zorder=10)
@@ -575,7 +580,7 @@ plt.show()
 custom_cmap = matplotlib.cm.get_cmap("RdYlBu").copy()
 custom_cmap.set_bad(color='tab:red')
 
-masked_array = copy.deepcopy(np.array(natural_single_L2_error1))
+masked_array = copy.deepcopy(np.array(conc_single_residuals))
 
 fig, ax = plt.subplots(figsize=(3,3))
 im = plt.imshow(masked_array[9:18,9:18], cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1))
@@ -613,7 +618,190 @@ for j,i in enumerate(odor_sort_ind1):
     plt.show()
 
 
-#%% Figure 6B - Concentration sparsity
+#%% Odorants at different concentrations
+
+np.random.seed(1234)
+
+allsingleres = []
+singleinput = []
+allsingletruPNactivity = []
+
+tt = np.arange(len(master_odor_type))
+tt = np.delete(tt, odor_sort_ind)
+
+for o in master_odor_type[tt]:
+    spike = copy.deepcopy(master_odor_sensitivity_df.loc[o].to_numpy())
+    spike[np.abs(spike) < 40] = 0
+    
+    truPNactivity = np.zeros(len(KC_newidx_label))
+    
+    for i in range(len(alltarglo)):
+        gloidx = np.where(KC_newidx_label == alltarglo[i])[0]
+        if alltarglo[i] in master_PN_type:
+            s = np.where(alltarglo[i] == master_PN_type)[0][0]
+            truPNactivity[gloidx] = spike[s]
+        
+    allsingletruPNactivity.append(truPNactivity)
+    
+    KCact = np.dot(Psimat, truPNactivity)
+    
+    y = np.dot(Smat, KCact)
+    singleinput.append(y)
+
+
+for o in master_odor_type[odor_sort_ind]:
+    print(o)
+    
+    spike = copy.deepcopy(master_odor_sensitivity_df.loc[o].to_numpy())
+    spike[np.abs(spike) < 40] = 0
+    
+    truPNactivity = np.zeros(len(KC_newidx_label))
+    
+    for i in range(len(alltarglo)):
+        gloidx = np.where(KC_newidx_label == alltarglo[i])[0]
+        if alltarglo[i] in master_PN_type:
+            s = np.where(alltarglo[i] == master_PN_type)[0][0]
+            truPNactivity[gloidx] = spike[s]
+        
+    allsingletruPNactivity.append(truPNactivity)
+    
+    KCact = np.dot(Psimat, truPNactivity)
+    
+    y = np.dot(Smat, KCact)
+    singleinput.append(y)
+    
+    bounds = scipy.optimize.Bounds(lb=-np.inf, ub=np.inf)
+    constr = ({'type': 'eq', 'fun': lambda x: Theta @ x - y})
+    
+    x0 = np.linalg.pinv(Theta) @ y
+    
+    res = minimize(L1norm, x0, method='SLSQP', bounds=bounds, constraints=constr, options={'maxiter': 10000})
+    
+    allsingleres.append(res.x)
+
+
+conc_single_residuals = []
+    
+for l,i in enumerate(allsingleres):
+    rh_temp = []
+    for k,j in enumerate(singleinput):
+        gidx = np.where(np.abs(allsingletruPNactivity[k]) >= 40)[0]
+        rh_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
+    conc_single_residuals.append(rh_temp)
+
+
+#%% Figure 6B - Concentration-dependent perception of odor
+
+from matplotlib.gridspec import GridSpec
+
+i2 = 0
+
+labels = ['ethyl acetate', 'ethyl butyrate', '1-octen-3-ol', 'pentyl acetate', 
+          'methyl salicylate', '1-hexanol', 'E2-hexenal', '2-heptanone']
+
+concidx1 = np.arange(len(master_odor_type)-len(odor_sort_ind))
+concidx2 = np.arange(len(master_odor_type)-len(odor_sort_ind), len(master_odor_type))
+
+fig = plt.figure(figsize=(8,8))
+
+gs = GridSpec(3, 8, figure=fig)
+ax1 = fig.add_subplot(gs[0, :2])
+ax2 = fig.add_subplot(gs[1, :2])
+ax3 = fig.add_subplot(gs[2, :2])
+ax4 = fig.add_subplot(gs[0, 2:5])
+ax5 = fig.add_subplot(gs[0, 5:])
+ax6 = fig.add_subplot(gs[1, 2:5])
+ax7 = fig.add_subplot(gs[1, 5:])
+ax8 = fig.add_subplot(gs[2, 2:5])
+
+for i,j in enumerate(fig.get_axes()):
+    if i < 3:
+        rp = 2
+    else:
+        rp = 3
+    for k in np.flip(np.arange(rp)):
+        data = np.array(conc_single_residuals[i2])[np.append(concidx1, concidx2[i2])]
+        box1 = j.boxplot(data, positions=[k],
+                            widths=0.25,
+                            patch_artist=True,
+                            notch='',
+                            showfliers=False,
+                            boxprops={'fill': None}, zorder=3)
+        x = np.random.normal(k, 0.1, size=len(data))
+        j.scatter(x, data, marker='.', color=np.array(master_odor_color)[odor_sort_ind[i2]], edgecolors='none', alpha=0.5, s=80, zorder=2)
+        j.scatter(x[-1], data[-1], marker='*', color='tab:red', s=100, zorder=9)
+    
+        for linetype in box1.values():
+            for line in linetype:
+                line.set_color('#616161')
+                line.set_linewidth(1.5)
+        
+        i2 += 1
+        
+    if i < 3:
+        j.set_xticks(np.arange(rp))
+        j.set_xticklabels(['$10^{-4}$', '$10^{-2}$'], fontsize=15)
+    else:
+        j.set_xticks(np.arange(rp))
+        j.set_xticklabels(['$10^{-6}$', '$10^{-4}$', '$10^{-2}$'], fontsize=15)
+
+    j.set_ylim(-0.1, 1.5)
+    if i > 2:
+        j.set_yticks([])
+    else:
+        j.set_ylabel(r'$r_{\alpha|\beta}$', fontsize=25)
+        j.set_yticks([0, 0.5, 1, 1.5])
+        j.set_yticklabels([0, 0.5, 1, 1.5], fontsize=15)
+    j.set_title(labels[i], 
+                color=np.array(master_odor_color)[np.where(master_odor_type==labels[i])[0][0]],
+                fontsize=15)
+
+plt.tight_layout()
+plt.show()
+
+
+#%% Supplementary Figure S5 - Z-scores for natural fruit odor mixtures
+
+zscores = np.abs(scipy.stats.zscore(conc_single_residuals, axis=1))
+
+fig, ax = plt.subplots(figsize=(3,2.5))
+plt.bar(np.arange(len(unu)), np.diag(zscores)[9:18])
+plt.xticks(np.arange(len(unu)), np.array(unu), rotation='vertical', fontsize=13)
+plt.yscale('log')
+plt.yticks(fontsize=15)
+plt.ylabel('$Z$-score', fontsize=15)
+plt.xlim(-1, len(unu))
+plt.ylim(0.25, 11, len(unu))
+plt.yticks([1, 10], ['$-10^{0}$', '$-10^{1}$'], fontsize=15)
+plt.gca().invert_yaxis()
+plt.tight_layout()
+plt.show()
+
+
+#%% Supplementary Figure S6 - Full MBON response profiles for natural mixtures
+
+numpsp = 11
+
+fig, ax = plt.subplots(1, numpsp, figsize=(5,4))
+fig.delaxes(ax[9])
+fig.delaxes(ax[10])
+i1 = 0
+i2 = 0
+for i,j in enumerate(natural_singleinput[9:18]):
+    if i2 == numpsp:
+        i1 += 1
+        i2 = 0
+    ax[i2].set_title(natural_odor_type[9:18][i][:-3], rotation=90, fontsize=13)
+    ax[i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='none', 
+                      vmax=np.max(natural_singleinput[9:18]), vmin=np.min(natural_singleinput[9:18]))
+    ax[i2].set_xticks([])
+    ax[i2].set_yticks([])
+    i2 += 1
+plt.tight_layout()
+plt.show()
+
+
+#%% Supplementary Figure S7 - Concentration sparsity
 
 conc_sparsity = np.empty((10,4))
 iii = 0
@@ -679,197 +867,8 @@ ax.view_init(40, -35)
 ax.dist = 13
 plt.show()
 
-#%%
 
-np.random.seed(1234)
-
-allsingleres = []
-singleinput = []
-allsingletruPNactivity = []
-
-tt = np.arange(len(master_odor_type))
-tt = np.delete(tt, odor_sort_ind)
-
-for o in master_odor_type[tt]:
-    spike = copy.deepcopy(master_odor_sensitivity_df.loc[o].to_numpy())
-    spike[np.abs(spike) < 40] = 0
-    
-    truPNactivity = np.zeros(len(KC_newidx_label))
-    
-    for i in range(len(alltarglo)):
-        gloidx = np.where(KC_newidx_label == alltarglo[i])[0]
-        if alltarglo[i] in master_PN_type:
-            s = np.where(alltarglo[i] == master_PN_type)[0][0]
-            truPNactivity[gloidx] = spike[s]
-        
-    allsingletruPNactivity.append(truPNactivity)
-    
-    KCact = np.dot(Psimat, truPNactivity)
-    
-    y = np.dot(Smat, KCact)
-    singleinput.append(y)
-
-
-for o in master_odor_type[odor_sort_ind]:
-    print(o)
-    
-    spike = copy.deepcopy(master_odor_sensitivity_df.loc[o].to_numpy())
-    spike[np.abs(spike) < 40] = 0
-    
-    truPNactivity = np.zeros(len(KC_newidx_label))
-    
-    for i in range(len(alltarglo)):
-        gloidx = np.where(KC_newidx_label == alltarglo[i])[0]
-        if alltarglo[i] in master_PN_type:
-            s = np.where(alltarglo[i] == master_PN_type)[0][0]
-            truPNactivity[gloidx] = spike[s]
-        
-    allsingletruPNactivity.append(truPNactivity)
-    
-    KCact = np.dot(Psimat, truPNactivity)
-    
-    y = np.dot(Smat, KCact)
-    singleinput.append(y)
-    
-    bounds = scipy.optimize.Bounds(lb=-np.inf, ub=np.inf)
-    constr = ({'type': 'eq', 'fun': lambda x: Theta @ x - y})
-    
-    x0 = np.linalg.pinv(Theta) @ y
-    
-    res = minimize(L1norm, x0, method='SLSQP', bounds=bounds, constraints=constr, options={'maxiter': 10000})
-    
-    allsingleres.append(res.x)
-
-
-single_L2_error1 = []
-    
-for l,i in enumerate(allsingleres[6:]):
-    L2_error_temp = []
-    for k,j in enumerate(singleinput):
-        gidx = np.where(np.abs(allsingletruPNactivity[k]) >= 40)[0]
-        L2_error_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
-    single_L2_error1.append(L2_error_temp)
-
-
-#%% Figure 6C - Z-scores for single odorants at various concentrations
-
-from scipy import stats
-
-zscores_1 = -scipy.stats.zscore(single_L2_error1, axis=1)
-
-fig, ax = plt.subplots(figsize=(3,3))
-a = np.diag(zscores_1[:,89+6:])
-cmap = matplotlib.cm.get_cmap("plasma")
-ccc = []
-for i in range(5):
-    ccc.append(np.array(master_odor_color)[odor_sort_ind[6:]][3*i])
-    plt.plot([2,1,0], a[3*i:3*i+3], color=cmap(i/5), 
-             marker='o', lw=3)
-plt.xticks([0,1,2], ['$10^{-6}$', '$10^{-4}$', '$10^{-2}$'], fontsize=15)
-plt.yscale('log')
-plt.yticks(fontsize=15)
-plt.ylabel('$Z$-score', fontsize=15)
-plt.xlabel('Dilution', fontsize=15)
-plt.legend(['pentyl acetate', 'methyl salicylate', '1-hexanol', 'E2-hexenal', '2-heptanone'], 
-           fontsize=12, bbox_to_anchor=(0.95, 1.65), labelcolor=ccc)
-plt.xlim(-0.25, 2.25)
-plt.ylim(0.25, 11)
-plt.yticks([1, 10], ['$-10^{0}$', '$-10^{1}$'], fontsize=15)
-plt.gca().invert_yaxis()
-plt.show()
-
-
-#%% Figure 6D - Changes in Z-scores 
-
-a1 = np.array(single_L2_error1)[:,89+6:]
-a2 = -zscores_1[:,89+6:]
-lab = ['pentyl acetate', 'methyl salicylate', '1-hexanol', 'E2-hexenal', '2-heptanone']
-ccc = ['tab:blue', 'tab:green', 'tab:red']
-mak = ['o', 'v', 's']
-
-a2_norm = np.divide(a2.T, np.diag(a2)).T
-
-for i in range(5):
-    fig, ax = plt.subplots(figsize=(2.5,2.5))
-    for j in range(3):
-        plt.plot([2, 1, 0],
-                 a2[3*i:3*i+3, 3*i:3*i+3][:,j], c=ccc[j])
-    
-    plt.xticks([0, 1, 2], ['$10^{-6}$', '$10^{-4}$', '$10^{-2}$'], fontsize=15)
-    low = np.floor(np.min(a2[3*i:3*i+3, 3*i:3*i+3]))
-    up = np.ceil(np.max(a2[3*i:3*i+3, 3*i:3*i+3]))
-    
-    plt.yticks(np.linspace(low, up, 6), fontsize=15)
-    plt.ylabel('$Z$-score', fontsize=15)
-    plt.xlabel('Dilution', fontsize=15)
-    plt.xlim(-0.25, 2.25)
-    plt.title(lab[i], fontsize=15)
-    plt.show()
-        
-
-
-#%% Figure 6E - Ethyl butyrate residual distribution
-
-rh = single_residuals[np.where(master_odor_type == 'ethyl butyrate')[0][0]]
-
-legend_elements = [matplotlib.patches.Patch(facecolor='#1f77b4', edgecolor='#a8a8a8', label='$10^{-2}$'),
-                   matplotlib.patches.Patch(facecolor='#aec7e8', edgecolor='#a8a8a8', label='$10^{-4}$')]
-
-fig, ax = plt.subplots(figsize=(2.5,2.5))
-vp1 = plt.violinplot(rh, positions=[36],
-               widths=12,
-               showextrema=False)
-box1 = plt.boxplot(rh, positions=[36], 
-                   widths=3,
-                   patch_artist=True,
-                   notch='',
-                   showfliers=False)
-vp2 = plt.violinplot(single_L2_error1[2], positions=[21],
-               widths=12,
-               showextrema=False)
-box2 = plt.boxplot(single_L2_error1[2], positions=[21], 
-                   widths=3,
-                   patch_artist=True,
-                   notch='',
-                   showfliers=False)
-vp1['bodies'][0].set_facecolor('#1f77b4')
-vp1['bodies'][0].set_edgecolor('#a8a8a8')
-vp1['bodies'][0].set_linewidth(1)
-vp1['bodies'][0].set_alpha(1)
-vp2['bodies'][0].set_facecolor('#aec7e8')
-vp2['bodies'][0].set_edgecolor('#a8a8a8')
-vp2['bodies'][0].set_linewidth(1)
-vp2['bodies'][0].set_alpha(1)
-
-for linetype in box1.values():
-    for line in linetype:
-        line.set_color('#616161')
-        line.set_linewidth(1.5)
-for patch in box1['boxes']:
-    patch.set(facecolor='white')
-
-for linetype in box2.values():
-    for line in linetype:
-        line.set_color('#616161')
-        line.set_linewidth(1.5)
-for patch in box2['boxes']:
-    patch.set(facecolor='white')
-
-plt.ylim(-0.1, 1.5)
-plt.xlim(12, 45)
-plt.ylabel('$r_{\\alpha|\\beta}$', fontsize=20)
-plt.xticks([36, 21], fontsize=15)
-plt.yticks([0, 0.5, 1], fontsize=15)
-plt.xlabel('Sparsity $K$', fontsize=15)
-ax2 = ax.twiny()
-ax2.set_xticks([36,21])
-ax2.set_xticklabels(['$10^{-2}$', '$10^{-4}$'], fontsize=15)
-ax2.set_xlim(12, 45)
-ax2.set_xlabel('Dilution', fontsize=15)
-plt.show()
-
-
-#%% Supplementary Figure S2 - Residuals for undiluted natural fruit odor mixtures
+#%% Supplementary Figure S8 - Residuals for undiluted natural fruit odor mixtures
 
 fig, ax = plt.subplots(figsize=(3,3))
 im = plt.imshow(masked_array[:9,:9], cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1, vmin=1e-8))
@@ -886,53 +885,32 @@ plt.tight_layout()
 plt.show()
 
 
-#%% Supplementary Figure S3 - Z-scores for natural fruit odor mixtures
+#%% Supplementary Figure S9 - Full MBON response profiles for odorants at different concentrations
 
-zscores = np.abs(scipy.stats.zscore(natural_single_L2_error1, axis=1))
+numpsp = 11
 
-fig, ax = plt.subplots(figsize=(3,2.5))
-plt.bar(np.arange(len(unu)), np.diag(zscores)[9:18])
-plt.xticks(np.arange(len(unu)), np.array(unu), rotation='vertical', fontsize=13)
-plt.yscale('log')
-plt.yticks(fontsize=15)
-plt.ylabel('$Z$-score', fontsize=15)
-plt.xlim(-1, len(unu))
-plt.ylim(0.25, 11, len(unu))
-plt.yticks([1, 10], ['$-10^{0}$', '$-10^{1}$'], fontsize=15)
-plt.gca().invert_yaxis()
+fig, ax = plt.subplots(2, numpsp, figsize=(6,10))
+fig.delaxes(ax[1][10])
+i1 = 0
+i2 = 0
+for i,j in enumerate(singleinput[-len(odor_sort_ind):]):
+    if i2 == numpsp:
+        i1 += 1
+        i2 = 0
+    if '-' not in master_odor_type[odor_sort_ind][i]:
+        lab = '{} -2'.format(master_odor_type[odor_sort_ind][i])
+    else:
+        lab = master_odor_type[odor_sort_ind][i]
+    ax[i1][i2].set_title(lab, rotation=90, fontsize=13)
+    ax[i1][i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='none', 
+                      vmax=np.max(singleinput[-len(odor_sort_ind):]), 
+                      vmin=np.min(singleinput[-len(odor_sort_ind):]))
+    ax[i1][i2].set_xticks([])
+    ax[i1][i2].set_yticks([])
+    i2 += 1
 plt.tight_layout()
 plt.show()
 
-#%% Figure S4 - Residuals for single odorants at various concentrations
 
-custom_cmap = matplotlib.cm.get_cmap("RdYlBu").copy()
-custom_cmap.set_bad(color='tab:red')
-
-labels1 = ['pentyl acetate -2', 'pentyl acetate -4', 'pentyl acetate -6',
-       'methyl salicylate -2', 'methyl salicylate -4',
-       'methyl salicylate -6', '1-hexanol -2', '1-hexanol -4',
-       '1-hexanol -6', 'E2-hexenal -2', 'E2-hexenal -4', 'E2-hexenal -6',
-       '2-heptanone -2', '2-heptanone -4', '2-heptanone -6']
-
-masked_array = copy.deepcopy(np.array(single_L2_error1))
-
-fig, ax = plt.subplots(figsize=(16,6))
-im = plt.imshow(masked_array, cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1))
-ax.xaxis.set_ticks_position('bottom')
-ax.xaxis.set_label_position('bottom')
-ax.yaxis.set_ticks_position('left')
-ax.yaxis.set_label_position('left')
-t = np.append(np.array(master_odor_type)[tt], master_odor_type[odor_sort_ind])
-c = np.append(np.array(master_odor_color)[tt], np.array(master_odor_color)[odor_sort_ind])
-plt.xticks(np.arange(len(master_odor_type)), t, rotation='vertical', fontsize=10)
-plt.yticks(np.arange(len(odor_sort_ind[6:])), labels1, fontsize=10)
-for xtick, color in zip(ax.get_xticklabels(), c):
-    xtick.set_color(color)
-for ytick, color in zip(ax.get_yticklabels(), np.array(master_odor_color)[odor_sort_ind[6:]]):
-    ytick.set_color(color)
-cbar = plt.colorbar(im, fraction=0.1, location='top', pad=0.01)
-cbar.ax.tick_params(labelsize=15)
-plt.tight_layout()
-plt.show()
 
 
