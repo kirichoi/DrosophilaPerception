@@ -32,3 +32,14 @@ Below is a short description of what each files and folders contain:
 	- *neuron_MBON_df.pkl*: a pickled dataframe listing KCs and MBONs with connections.
     - *conn_MBON_df.pkl*: a pickled dataframe listing connectivity between KCs and MBONs.
 - *precalc/*: a folder containing pre-computed outputs for a number of computations that take a long time. The scripts prioritize using these pre-computed outputs but this behavior can be overiden by **LOAD** flag to re-run everything. ***WARNING -- THIS CAN TAKE A VERY LONG TIME!***
+
+
+## Requirements
+
+The scripts have been tested on Python 3.9.15 and Python 3.11.3. The following packages are necessary to run the code:
+
+* NumPy (>=1.24.0)
+* SciPy (>=1.9.3)
+* matplotlib (>=3.6.2)
+* pandas (>=1.5.2)
+* scikit-learn (>=1.2.0)
