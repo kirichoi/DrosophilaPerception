@@ -9,7 +9,7 @@
 # Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing
 #
 # Figures related to connectivity matrices and CS condition tests are available
-# from this Python script.
+# in this Python script.
 
 #%% Load datasets
 
@@ -26,7 +26,7 @@ os.chdir(os.path.dirname(__file__))
 FAFB_glo_info = pd.read_csv('./1-s2.0-S0960982220308587-mmc4.csv')
 
 PNKC_df = pd.read_pickle(r'./data/PNKC_df.pkl')
-MBON_df = pd.read_pickle(r'./data/MBON_df.pkl')
+MBON_df = pd.read_pickle(r'./data/MBON_df3.pkl')
 
 PNKCbid = list(PNKC_df['bodyId'])
 PNKCinstance = list(PNKC_df['instance'])
@@ -62,8 +62,8 @@ MBONtype = list(MBON_df['type'])
 
 neuron_PNKC_df = pd.read_pickle(r'./data/neuron_PNKC_df.pkl')
 conn_PNKC_df = pd.read_pickle(r'./data/conn_PNKC_df.pkl')
-neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df.pkl')
-conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df.pkl')
+neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df3.pkl')
+conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df3.pkl')
 
 matrix_KC = connection_table_to_matrix(conn_PNKC_df, 'bodyId')
 matrix_MBON = connection_table_to_matrix(conn_MBON_df, 'bodyId')
@@ -82,14 +82,11 @@ KC_sorted = np.sort(matrix_KC.columns.values)
 KC_sortedidx = np.argsort(matrix_KC.columns.values)
 
 matrix_KC_re = np.array(matrix_KC)[KC_newidx][:,KC_sortedidx]
-matrix_KC_re_df = pd.DataFrame(matrix_KC_re)
-matrix_KC_re_df.columns = matrix_KC.columns.values[KC_sortedidx]
-matrix_KC_re_df.index = KC_newidx_label
 
 MBON_sortedidx = np.argsort(matrix_MBON.columns.values)
 
 matrix_MBONKC = matrix_MBON.loc[KC_sorted]
-matrix_MBONKC = np.array(matrix_MBONKC)[KC_sortedidx][:,MBON_sortedidx]
+matrix_MBONKC = np.array(matrix_MBONKC)[:,MBON_sortedidx]
 
 matrix_MBONKCidx = np.nonzero(np.sum(matrix_MBONKC, axis=0))[0]
 
@@ -103,11 +100,12 @@ for i in np.sort(matrix_MBON.columns.values):
 MBON_newidx_label = np.array(MBONtype)[MBONbid_idx][matrix_MBONKCidx]
 
 
-#%% Supplementary Figure S1 - PN-KC connectivity matrix
+#%% Figure S1A - PN-KC connectivity matrix
 
 fig, ax = plt.subplots(figsize=(10,20))
 ax.set_yticks([])
-im = plt.imshow(matrix_KC_re.T, cmap='binary', aspect='auto', interpolation='none', norm=matplotlib.colors.Normalize(vmax=15))
+im = plt.imshow(matrix_KC_re.T, cmap='binary', aspect='auto', interpolation='none', 
+                norm=matplotlib.colors.Normalize(vmax=15))
 ax.xaxis.set_ticks_position('bottom')
 ax.xaxis.set_label_position('bottom')
 ax.yaxis.set_ticks_position('left')
@@ -116,11 +114,12 @@ plt.xticks(np.arange(len(KC_newidx_label)), np.array(KC_newidx_label), rotation=
 plt.show()
 
 
-#%% Supplementary Figure S2 - KC-MBON connectivity matrix
+#%% Figure S1B - KC-MBON connectivity matrix
 
-fig, ax = plt.subplots(figsize=(5,10))
+fig, ax = plt.subplots(figsize=(4.7,20))
 ax.set_yticks([])
-im = plt.imshow(matrix_MBONKC, cmap='binary', aspect='auto', interpolation='none', norm=matplotlib.colors.Normalize(vmax=10))
+im = plt.imshow(matrix_MBONKC, cmap='binary', aspect='auto', interpolation='none', 
+                norm=matplotlib.colors.Normalize(vmax=10))
 ax.xaxis.set_ticks_position('bottom')
 ax.xaxis.set_label_position('bottom')
 ax.yaxis.set_ticks_position('left')
@@ -128,25 +127,7 @@ ax.yaxis.set_label_position('left')
 plt.xticks(np.arange(len(MBON_newidx_label)), np.array(MBON_newidx_label), rotation='vertical', fontsize=5)
 plt.show()
 
-#%% Supplementary Figure S4A - Sparsity vs dimension m
-
-sparsity = np.arange(2, 100)
-
-fig = plt.figure(figsize=(4,3))
-plt.plot(sparsity, sparsity*np.log(np.shape(matrix_KC)[0]/sparsity))
-plt.hlines(np.shape(matrix_MBONKC)[1], 0, 100, ls='--', color='k')
-plt.text(20, 30, r'$K\mathrm{log}(\frac{n}{K}), n=119$', color='tab:blue', fontsize=15)
-plt.text(20, 58, r'$m=56$', color='k', fontsize=15)
-plt.xlabel('Sparsity $K$', fontsize=15)
-plt.ylabel(r'$m$', fontsize=15)
-plt.xticks(fontsize=15)
-plt.yticks(fontsize=15)
-plt.xlim(0, 100)
-plt.ylim(0, 70)
-plt.show()
-
-
-#%% Supplementary Figure S4B - Relaxed coherence
+#%% Figure 10 - Relaxed coherence
 
 Smat = np.zeros(np.shape(matrix_MBONKC.T))
 

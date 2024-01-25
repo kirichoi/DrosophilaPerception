@@ -9,8 +9,8 @@
 # Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing
 #
 # Figures related to PCA and t-SNE using uPN activity profiles and MBON 
-# response profiles are presetned in this Python script.
-# Using the pickled files instead are highly recommended.
+# response profiles are available in this Python script.
+# To view the figures, using the pickled files are highly recommended.
 
 #%% Load datasets
 
@@ -59,8 +59,8 @@ glo_labelKC[vc5] = 'VM6'
 
 neuron_PNKC_df = pd.read_pickle(r'./data/neuron_PNKC_df.pkl')
 conn_PNKC_df = pd.read_pickle(r'./data/conn_PNKC_df.pkl')
-neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df.pkl')
-conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df.pkl')
+neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df3.pkl')
+conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df3.pkl')
 
 matrix_KC = connection_table_to_matrix(conn_PNKC_df, 'bodyId')
 matrix_MBON = connection_table_to_matrix(conn_MBON_df, 'bodyId')
@@ -125,15 +125,11 @@ KC_sorted = np.sort(matrix_KC.columns.values)
 KC_sortedidx = np.argsort(matrix_KC.columns.values)
 
 matrix_KC_re = np.array(matrix_KC)[KC_newidx][:,KC_sortedidx]
-matrix_KC_re_df = pd.DataFrame(matrix_KC_re)
-matrix_KC_re_df.columns = matrix_KC.columns.values[KC_sortedidx]
-matrix_KC_re_df.index = KC_newidx_label
-KC_sorted_ids = matrix_KC.columns.values[KC_sortedidx]
 
 MBON_sortedidx = np.argsort(matrix_MBON.columns.values)
 
 matrix_MBONKC = matrix_MBON.loc[KC_sorted]
-matrix_MBONKC = np.array(matrix_MBONKC)[KC_sortedidx][:,MBON_sortedidx]
+matrix_MBONKC = np.array(matrix_MBONKC)[:,MBON_sortedidx]
 
 matrix_MBONKCidx = np.nonzero(np.sum(matrix_MBONKC, axis=0))[0]
 
@@ -268,7 +264,7 @@ MBONodorfeatures = pd.DataFrame(singleinput, index=master_odor_type)
 MBONf = MBONodorfeatures.values
 MBONf = StandardScaler().fit_transform(MBONf)
 
-#%% Supplementary Figure S11B - PCA using uPN and MBON response profiles
+#%% Figure S12B - PCA using uPN and MBON response profiles
 
 pca3 = PCA(n_components=10)
 pcomp3 = pca3.fit_transform(PNf)
@@ -291,6 +287,7 @@ ax.set_yticks([-5, 0, 5])
 ax.set_yticklabels([-5, 0, 5], fontsize=13)
 ax.set_zticks([-5, 0, 5])
 ax.set_zticklabels([-5, 0, 5], fontsize=13)
+ax.set_box_aspect(None, zoom=0.8)
 plt.show()
 
 pca1 = PCA(n_components=10)
@@ -314,10 +311,11 @@ ax.set_zticks([-5, 0, 5])
 ax.set_zticklabels([-5, 0, 5], fontsize=13)
 ax.set_yticks([-5, 0, 5])
 ax.set_yticklabels([-5, 0, 5], fontsize=13)
+ax.set_box_aspect(None, zoom=0.8)
 plt.show()
 
 
-#%% Supplementary Figure S11C - t-SNE using uPN and MBON response profiles
+#%% Figure S12C - t-SNE using uPN and MBON response profiles
 
 X_embedded3  = manifold.TSNE(n_components=2, learning_rate='auto',
                             init='pca', perplexity=15).fit_transform(PNf)

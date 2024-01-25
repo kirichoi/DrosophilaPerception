@@ -9,12 +9,12 @@
 # Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing
 #
 # Figures related to uPN activity reconstruction in response to single odorants
-# and random odorant mixtures are presetned in this Python script.
+# and random odorant mixtures are available in this Python script.
 # Certain computation can take a long time and pre-computed array files are
 # available.
 # Disable the flag to re-run the computation.
 # CAUTION! - THIS CAN TAKE A LONG TIME!
-# Using the pickled files instead are highly recommended.
+# To view the figures, using the pickled files are highly recommended.
 # 
 # FLAG TO LOAD PRE-COMPUTED FILES #############################################
 LOAD = True
@@ -72,8 +72,8 @@ glo_labelKC[vc5] = 'VM6'
 
 neuron_PNKC_df = pd.read_pickle(r'./data/neuron_PNKC_df.pkl')
 conn_PNKC_df = pd.read_pickle(r'./data/conn_PNKC_df.pkl')
-neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df.pkl')
-conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df.pkl')
+neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df3.pkl')
+conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df3.pkl')
 
 matrix_KC = connection_table_to_matrix(conn_PNKC_df, 'bodyId')
 matrix_MBON = connection_table_to_matrix(conn_MBON_df, 'bodyId')
@@ -160,15 +160,11 @@ KC_sorted = np.sort(matrix_KC.columns.values)
 KC_sortedidx = np.argsort(matrix_KC.columns.values)
 
 matrix_KC_re = np.array(matrix_KC)[KC_newidx][:,KC_sortedidx]
-matrix_KC_re_df = pd.DataFrame(matrix_KC_re)
-matrix_KC_re_df.columns = matrix_KC.columns.values[KC_sortedidx]
-matrix_KC_re_df.index = KC_newidx_label
-KC_sorted_ids = matrix_KC.columns.values[KC_sortedidx]
 
 MBON_sortedidx = np.argsort(matrix_MBON.columns.values)
 
 matrix_MBONKC = matrix_MBON.loc[KC_sorted]
-matrix_MBONKC = np.array(matrix_MBONKC)[KC_sortedidx][:,MBON_sortedidx]
+matrix_MBONKC = np.array(matrix_MBONKC)[:,MBON_sortedidx]
 
 matrix_MBONKCidx = np.nonzero(np.sum(matrix_MBONKC, axis=0))[0]
 
@@ -300,7 +296,7 @@ for o in master_odor_type:
     y = np.dot(Smat, KCact)
     singleinput.append(y)
 
-#%% Figure 3A - uPN activity profile of single odorants
+#%% Figure 3 - uPN activity profile of single odorants
 
 fig, ax = plt.subplots(figsize=(7,14))
 im = plt.imshow(master_odor_sensitivity_array, norm=matplotlib.colors.CenteredNorm(), cmap='RdBu_r', aspect='auto')
@@ -323,7 +319,6 @@ if not LOAD:
     np.random.seed(1234)
     
     allsingleres = []
-    singlecosine = []
     
     for i,o in enumerate(master_odor_type):
         print(o)
@@ -331,6 +326,10 @@ if not LOAD:
         truPNactivity = allsingletruPNactivity[i]
         
         y = singleinput[i]
+        
+        rid = np.random.choice(np.arange(len(y)), 11, replace=False)
+        what = np.random.choice([2, 0.5], 11)
+        y[rid] = what*y[rid]
         
         bounds = scipy.optimize.Bounds(lb=-np.inf, ub=np.inf)
         constr = ({'type': 'eq', 'fun': lambda x: Theta @ x - y})
@@ -340,7 +339,6 @@ if not LOAD:
         res = minimize(L1norm, x0, method='SLSQP', bounds=bounds, constraints=constr, options={'maxiter': 10000})
         
         allsingleres.append(res.x)
-        singlecosine.append(scipy.spatial.distance.cosine(truPNactivity, res.x))
         
     single_residuals = []
         
@@ -351,8 +349,7 @@ if not LOAD:
             r_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
         single_residuals.append(r_temp)
 else:
-    singlecosine = np.load('./precalc/singlecosine.npy')
-    single_residuals = np.load('./precalc/single_residuals.npy')
+    single_residuals = np.load('./precalc/single_residuals3.npy')
 
 masked_array = copy.deepcopy(np.array(single_residuals))
 masked_array1 = copy.deepcopy(np.array(single_residuals))
@@ -366,28 +363,50 @@ x = np.arange(len(master_odor_type))
 cidx = np.where(np.isnan(np.diag(masked_array1)))[0]
 ncidx = np.delete(x,cidx)
 
-#%% Figure 3B - Residuals for single odorants
 
-custom_cmap = matplotlib.cm.get_cmap("RdYlBu").copy()
-custom_cmap.set_bad(color='tab:red')
+#%% Figure 4 - Full residual distributions
 
-fig, ax = plt.subplots(figsize=(16,16))
-im = plt.imshow(masked_array, cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1), interpolation='none')
-ax.xaxis.set_ticks_position('bottom')
-ax.xaxis.set_label_position('bottom')
-ax.yaxis.set_ticks_position('left')
-ax.yaxis.set_label_position('left')
-plt.xticks(np.arange(len(master_odor_type)), np.array(master_odor_type), rotation='vertical', fontsize=10)
-plt.yticks(np.arange(len(master_odor_type)), np.array(master_odor_type), fontsize=10)
-for xtick, color in zip(ax.get_xticklabels(), master_odor_color):
-    xtick.set_color(color)
-for ytick, color in zip(ax.get_yticklabels(), master_odor_color):
-    ytick.set_color(color)
-cbar = plt.colorbar(im, fraction=0.04, location='top', pad=0.01)
-cbar.ax.tick_params(labelsize=15)
+numpsp = 20
+fig, ax = plt.subplots(5, 1, figsize=(20,20))
+i1 = 0
+i2 = 0
+for i,j in enumerate(single_residuals):
+    if i1 == numpsp:
+        i1 = 0
+        i2 += 1
+    j = np.array(j)
+    box1 = ax[i2].boxplot(j, positions=[i1], 
+                       widths=0.25,
+                       patch_artist=True,
+                       notch='',
+                       showfliers=False,
+                       boxprops={'fill': None}, zorder=3)
+    x = np.random.normal(i1, 0.1, size=len(j))
+    ax[i2].scatter(x, j, marker='.', color=master_odor_color[i], edgecolors='none', alpha=0.5, s=80, zorder=2)
+    ax[i2].scatter(x[i], j[i], marker='*', color='tab:red', s=100, zorder=9)
+
+    for linetype in box1.values():
+        for line in linetype:
+            line.set_color('#616161')
+            line.set_linewidth(1.5)
+    i1 += 1 
+        
+for i in range(5):
+    ax[i].set_ylim(-0.1, 1.5)
+    ax[i].set_ylabel(r'$r_{\alpha|\beta}$', fontsize=25)
+    if i == 4:
+        ax[i].set_xticks(np.arange(17))
+    else:
+        ax[i].set_xticks(np.arange(numpsp))
+    ax[i].set_xticklabels(master_odor_type[i*numpsp:(i+1)*numpsp], rotation=30, ha='right', fontsize=15)
+    ax[i].set_yticks([0, 0.5, 1, 1.5])
+    ax[i].set_yticklabels([0, 0.5, 1, 1.5], fontsize=15)
+    for xtick, color in zip(ax[i].get_xticklabels(), master_odor_color[i*numpsp:(i+1)*numpsp]):
+        xtick.set_color(color)
+plt.tight_layout()
 plt.show()
 
-#%% Figure 4A - Z-scores for single odorants
+#%% Figure 5A - Z-scores for single odorants
 
 from scipy import stats
 
@@ -408,14 +427,13 @@ plt.gca().invert_xaxis()
 plt.gca().invert_yaxis()
 plt.show()
 
-#%% Figure 4B - Sparsity vs self-residual
+#%% Figure 5B - Sparsity vs self-residual
 
 def sigmoid(x, L, k, x0, b):
     return L/(1 + np.exp(-k*(x-x0))) + b
 
 popt, pcov = scipy.optimize.curve_fit(sigmoid, natural_sparsity, np.log10(np.diag(single_residuals)),
                                       p0=[-10,1,25,-1])
-
 
 x = np.arange(np.max(natural_sparsity))
 hp = (np.max(sigmoid(x, *popt)) - np.min(sigmoid(x, *popt)))/2 + np.min(sigmoid(x, *popt))
@@ -436,7 +454,7 @@ plt.ylabel('$r_{\\alpha|\\alpha}$', fontsize=20)
 plt.tight_layout()
 plt.show()
 
-#%% Figure 4C - Sparsity vs Z-scores
+#%% Figure 5C - Sparsity vs Z-scores
 
 p_r_1 = scipy.stats.pearsonr(natural_sparsity, np.log10(np.diag(zscores)))
 
@@ -457,7 +475,7 @@ plt.text(20, 10, '$p \ll 0.0001$', fontsize=15)
 plt.tight_layout()
 plt.show()
 
-#%% Figure 4D - Functional group sparsity comparison
+#%% Figure 5D - Functional group sparsity comparison
 
 alcohol_idx1 = np.where(master_odor_type == 'methanol')[0][0]
 alcohol_idx2 = np.where(master_odor_type == '2,3-butanediol')[0][0]
@@ -495,10 +513,10 @@ plt.bar(np.arange(3),
         capsize=5)
 plt.yticks([0, 10, 20, 30, 40], fontsize=13)
 plt.xticks(np.arange(3), ['Alcohols', 'Esters', 'Acids+\nTerpenes'], rotation=45, horizontalalignment='right', fontsize=13)
-plt.ylabel('Average sparsity $\\langle K \\rangle}$', fontsize=15)
+plt.ylabel('Average sparsity $\\langle K \\rangle$', fontsize=15)
 plt.show()
 
-#%% Figure 4E - Methanol and ethanol residuals
+#%% Figure 5E - Methanol and ethanol residuals
 
 fig, ax = plt.subplots(figsize=(3,3.5))
 box1 = plt.boxplot(single_residuals[55], positions=[0], 
@@ -540,46 +558,25 @@ plt.yticks([0, 0.5, 1], fontsize=13)
 plt.show()
 
 
-#%% Extended Figure 1 - Full residual distributions
+#%% Figure S3 - Residuals for single odorants
 
-numpsp = 20
-fig, ax = plt.subplots(5, 1, figsize=(20,20))
-i1 = 0
-i2 = 0
-for i,j in enumerate(single_residuals):
-    if i1 == numpsp:
-        i1 = 0
-        i2 += 1
-    j = np.array(j)
-    box1 = ax[i2].boxplot(j, positions=[i1], 
-                       widths=0.25,
-                       patch_artist=True,
-                       notch='',
-                       showfliers=False,
-                       boxprops={'fill': None}, zorder=3)
-    x = np.random.normal(i1, 0.1, size=len(j))
-    ax[i2].scatter(x, j, marker='.', color=master_odor_color[i], edgecolors='none', alpha=0.5, s=80, zorder=2)
-    ax[i2].scatter(x[i], j[i], marker='*', color='tab:red', s=100, zorder=9)
+custom_cmap = matplotlib.cm.get_cmap("RdYlBu").copy()
+custom_cmap.set_bad(color='tab:red')
 
-    for linetype in box1.values():
-        for line in linetype:
-            line.set_color('#616161')
-            line.set_linewidth(1.5)
-    i1 += 1 
-        
-for i in range(5):
-    ax[i].set_ylim(-0.1, 1.5)
-    ax[i].set_ylabel(r'$r_{\alpha|\beta}$', fontsize=25)
-    if i == 4:
-        ax[i].set_xticks(np.arange(17))
-    else:
-        ax[i].set_xticks(np.arange(numpsp))
-    ax[i].set_xticklabels(master_odor_type[i*numpsp:(i+1)*numpsp], rotation=30, ha='right', fontsize=15)
-    ax[i].set_yticks([0, 0.5, 1, 1.5])
-    ax[i].set_yticklabels([0, 0.5, 1, 1.5], fontsize=15)
-    for xtick, color in zip(ax[i].get_xticklabels(), master_odor_color[i*numpsp:(i+1)*numpsp]):
-        xtick.set_color(color)
-plt.tight_layout()
+fig, ax = plt.subplots(figsize=(16,16))
+im = plt.imshow(masked_array, cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1), interpolation='none')
+ax.xaxis.set_ticks_position('bottom')
+ax.xaxis.set_label_position('bottom')
+ax.yaxis.set_ticks_position('left')
+ax.yaxis.set_label_position('left')
+plt.xticks(np.arange(len(master_odor_type)), np.array(master_odor_type), rotation='vertical', fontsize=10)
+plt.yticks(np.arange(len(master_odor_type)), np.array(master_odor_type), fontsize=10)
+for xtick, color in zip(ax.get_xticklabels(), master_odor_color):
+    xtick.set_color(color)
+for ytick, color in zip(ax.get_yticklabels(), master_odor_color):
+    ytick.set_color(color)
+cbar = plt.colorbar(im, fraction=0.04, location='top', pad=0.01)
+cbar.ax.tick_params(labelsize=15)
 plt.show()
 
 
@@ -647,8 +644,8 @@ if not LOAD:
             result_temp.append(multcosine[l][x]<=0.05)
         mult_cosine_error.append(result_temp)
 else:
-    mult_cosine_error = np.load(r'./precalc/mult_cosine_error_500.npy')
-    allmulttruPNactivity = np.load(r'./precalc/allmulttruPNactivity_500.npy')
+    mult_cosine_error = np.load(r'./precalc/mult_cosine_error_500_3.npy')
+    allmulttruPNactivity = np.load(r'./precalc/allmulttruPNactivity_500_3.npy')
 
 trues = [1]
 for i in mult_cosine_error:
@@ -669,8 +666,7 @@ for i in synthetic_PNsparsity:
     synthetic_PNsparsity_mean.append(np.mean(i))
     synthetic_PNsparsity_std.append(np.std(i))    
 
-
-#%% Figure 5B - Random sampling of naturalistic odorants
+#%% Figure 6B - Random sampling of naturalistic odorants
 
 fig, ax = plt.subplots(figsize=(3.75,3))
 ax2 = ax.twinx()
@@ -682,14 +678,14 @@ ax2.scatter([1], np.mean(natural_sparsity), color='tab:red', marker='*', s=100, 
 ax2.errorbar([1], np.mean(natural_sparsity), yerr=np.std(natural_sparsity), zorder=10, c='tab:red')
 ax.set_ylabel('% correct', fontsize=15)
 ax.set_xlabel('$N_{od}$', fontsize=15)
-ax.set_xticks([0,5,10,15], fontsize=15)
+ax.set_xticks([0,5,10,15])
 ax.set_xticklabels([0,5,10,15], fontsize=15)
-ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0], fontsize=15)
+ax.set_yticks([0.2, 0.4, 0.6, 0.8, 1.0])
 ax.set_yticklabels([0.2, 0.4, 0.6, 0.8, 1.0], fontsize=15)
 ax.set_xlim(0, 15)
 ax.yaxis.label.set_color('tab:blue')
 ax.tick_params(axis='y', colors='tab:blue')
-ax2.set_yticks([0, 10, 20, 30, 40, 50], fontsize=15)
+ax2.set_yticks([0, 10, 20, 30, 40, 50])
 ax2.set_yticklabels([0, 10, 20, 30, 40, 50], fontsize=15)
 ax2.set_ylabel('Sparsity $K$', fontsize=15)
 ax2.yaxis.label.set_color('tab:red')
@@ -705,21 +701,7 @@ odor_attr = ['g-butyrolactone', '2,3-butanedione', 'propionic acid', 'phenylacet
 
 odor_attr_p = ['ethyl acetate', '2-heptanone']
 
-odor_attr_e = ['hexanoic acid', 'pentanoic acid', '3-methylthio-1-propanol', 
-               'a -terpineol', 'ethyl propionate', 'phenethyl alcohol',
-               '1-propanol', '1-penten-3-ol', 'b -pinene',
-               'hexyl butyrate', 'benzyl alcohol', 'acetone', 'Z2-hexenol',
-               'isopentanoic acid', '2-ethylhexanoic acid', 'diethyl succinate',
-               '2-pentanol', 'g-hexalactone', 'eugenol', 
-               'linalool oxide', 'cadaverine', 'methyl benzoate', '1-butanol',
-               'ethyl methanoate', '2-pentanone', 'hexanal', '3-methyl-2-buten-1-ol',
-               '3-methylbutanol', 'a -pinene', '2,3-butanediol', 'butanal',
-               'hexyl hexanoate', 'furfural', 'octanoic acid',
-               'methanol', 'pentyl acetate',
-               'butyric acid', 'ethyl cinnamate']
-
 odor_attr = odor_attr + odor_attr_p
-
 
 # bad smell
 odor_avers = ['1-octen-3-ol', '1-octanol', 'linalool', 'benzaldehyde', 'geosmin',
@@ -728,11 +710,6 @@ odor_avers = ['1-octen-3-ol', '1-octanol', 'linalool', 'benzaldehyde', 'geosmin'
 odor_avers_e = ['2-methylphenol']
 
 odor_avers = odor_avers + odor_avers_e
-
-# conflicting - perhaps concentration-dependent
-odor_attr_avers = ['ethanol', 'ethyl benzoate', 'pyruvic acid', 'ethyl 3-hydroxybutyrate',
-                   'hexyl acetate', 'acetic acid', 'geranyl acetate', 'ethyl butyrate',
-                   'acetophenone']
 
 if not LOAD:
     attr_comb = [list(x) for x in combinations(np.array(odor_attr), 2)]
@@ -822,12 +799,11 @@ if not LOAD:
     
     for l,i in enumerate(allmultres_avers):
         mult_cosine_error_avers.append(multcosine_avers[l]<=0.05)
-
 else:
-    mult_cosine_error_attr = np.load('./precalc/mult_cosine_error_attr.npy')
-    mult_cosine_error_avers = np.load('./precalc/mult_cosine_error_avers.npy')
+    mult_cosine_error_attr = np.load('./precalc/mult_cosine_error_attr3.npy')
+    mult_cosine_error_avers = np.load('./precalc/mult_cosine_error_avers3.npy')
 
-#%% Figure 5C - Comparison between attractive and aversive odorant mixtures
+#%% Figure 6C - Comparison between attractive and aversive odorant mixtures
 
 fig, ax = plt.subplots(figsize=(2.5,1))
 a = [Counter(mult_cosine_error_attr)[True]/len(mult_cosine_error_attr),
@@ -843,7 +819,7 @@ for ytick, color in zip(ax.get_yticklabels(), ['tab:green', 'tab:red']):
 plt.show()
 
 
-#%% Supplementary Figure S3 - Full MBON response profiles
+#%% Figure S2 - Full MBON response profiles
 
 numpsp = 33
 
@@ -867,98 +843,7 @@ for i,j in enumerate(singleinput):
 fig.tight_layout()
 plt.show()
 
-
-#%% Reconstruction of uPN activity when Gaussian noise is added
-
-if not LOAD:
-    np.random.seed(1234)
-    
-    alltarglo = np.unique(KC_newidx_label)
-    
-    noiselevel_result = [1]
-    
-    for noiselevel in np.arange(0.5,3.5,0.5):
-        print(noiselevel)
-        
-        allsingletruPNactivity_t = []
-        allsingleres_t = []
-    
-        for o in master_odor_type:
-            spike = copy.deepcopy(master_odor_sensitivity_df.loc[o].to_numpy())
-            spike[np.abs(spike) < 40] = 0
-            
-            truPNactivity = np.zeros(len(KC_newidx_label))
-            
-            for i in range(len(alltarglo)):
-                gloidx = np.where(KC_newidx_label == alltarglo[i])[0]
-                if alltarglo[i] in master_PN_type:
-                    s = np.where(alltarglo[i] == master_PN_type)[0][0]
-                    truPNactivity[gloidx] = spike[s]
-                else:
-                    truPNactivity[gloidx] = np.random.normal(0, noiselevel, len(gloidx))
-                
-            allsingletruPNactivity_t.append(truPNactivity)
-        
-        for oi,o in enumerate(master_odor_type[np.where(np.isnan(np.diag(masked_array1)))][:-1]):
-            KCact = np.dot(Psimat, allsingletruPNactivity_t[oi])
-            
-            y = np.dot(Smat, KCact)
-            
-            bounds = scipy.optimize.Bounds(lb=-np.inf, ub=np.inf)
-            constr = ({'type': 'eq', 'fun': lambda x: Theta @ x - y})
-            
-            x0 = np.linalg.pinv(Theta) @ y
-            
-            res = minimize(L1norm, x0, method='SLSQP', bounds=bounds, constraints=constr, options={'maxiter': 10000})
-            
-            allsingleres_t.append(res.x)
-            
-        single_residuals_t = []
-           
-        for l,i in enumerate(allsingleres_t):
-            r_temp = []
-            for k,j in enumerate(singleinput):
-                gidx = np.where(np.abs(allsingletruPNactivity_t[k]) >= 40)[0]
-                r_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
-            single_residuals_t.append(r_temp)         
-       
-        masked_array_t = copy.deepcopy(np.array(single_residuals_t))
-        for i,j in enumerate(masked_array_t):
-            idx_of_min = np.argmin(j)
-            masked_array_t[i][idx_of_min] = None
-                
-        noiselevel_result.append(len(np.where(np.isnan(np.diag(masked_array_t)))[0])/86)
-
-else:
-    noiselevel_result = np.load('./precalc/noiselevel_result.npy')
-
-#%% Supplementary Figure S10 - CS test when noise is added
-
-fig, ax = plt.subplots(figsize=(3,3))
-plt.plot(np.arange(0,3.5,0.5), noiselevel_result, lw=3)
-plt.xlabel(r'$\sigma$', fontsize=15)
-plt.ylabel('% Correct', fontsize=15)
-plt.ylim(0.6, 1.05)
-plt.yticks([0.6, 0.7, 0.8, 0.9, 1.], fontsize=15)
-plt.xticks(fontsize=15)
-plt.show()
-
-
-#%% Supplementary Figure S11A - Comparison between uPN and MBON response using Euclidean distance
-
-val_color = []
-
-for i in master_odor_type:
-    if i in odor_attr:
-        val_color.append('tab:green')
-    elif i in odor_avers:
-        val_color.append('tab:red')
-    elif i in odor_attr_e:
-        val_color.append('tab:green')
-    elif i in odor_attr_avers:
-        val_color.append('tab:orange')
-    else:
-        val_color.append('k')
+#%% Figure 12A - Comparison between uPN and MBON response using Euclidean distance
 
 from sklearn import metrics
 
@@ -1037,11 +922,87 @@ for xtick, color in zip(ax.get_xticklabels(), np.array(master_odor_color)[testod
 plt.tight_layout()
 plt.show()
 
+#%% Reconstruction of uPN activity when Gaussian noise is added
+
+if not LOAD:
+    np.random.seed(1234)
+    
+    alltarglo = np.unique(KC_newidx_label)
+    
+    noiselevel_result = [1]
+    
+    for noiselevel in np.arange(0.5,3.5,0.5):
+        print(noiselevel)
+        
+        allsingletruPNactivity_t = []
+        allsingleres_t = []
+    
+        for o in master_odor_type:
+            spike = copy.deepcopy(master_odor_sensitivity_df.loc[o].to_numpy())
+            spike[np.abs(spike) < 40] = 0
+            
+            truPNactivity = np.zeros(len(KC_newidx_label))
+            
+            for i in range(len(alltarglo)):
+                gloidx = np.where(KC_newidx_label == alltarglo[i])[0]
+                if alltarglo[i] in master_PN_type:
+                    s = np.where(alltarglo[i] == master_PN_type)[0][0]
+                    truPNactivity[gloidx] = spike[s]
+                else:
+                    truPNactivity[gloidx] = np.random.normal(0, noiselevel, len(gloidx))
+                
+            allsingletruPNactivity_t.append(truPNactivity)
+        
+        for oi,o in enumerate(master_odor_type[np.where(np.isnan(np.diag(masked_array1)))][:-1]):
+            KCact = np.dot(Psimat, allsingletruPNactivity_t[oi])
+            
+            y = np.dot(Smat, KCact)
+            
+            bounds = scipy.optimize.Bounds(lb=-np.inf, ub=np.inf)
+            constr = ({'type': 'eq', 'fun': lambda x: Theta @ x - y})
+            
+            x0 = np.linalg.pinv(Theta) @ y
+            
+            res = minimize(L1norm, x0, method='SLSQP', bounds=bounds, constraints=constr, options={'maxiter': 10000})
+            
+            allsingleres_t.append(res.x)
+            
+        single_residuals_t = []
+           
+        for l,i in enumerate(allsingleres_t):
+            r_temp = []
+            for k,j in enumerate(singleinput):
+                gidx = np.where(np.abs(allsingletruPNactivity_t[k]) >= 40)[0]
+                r_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
+            single_residuals_t.append(r_temp)         
+       
+        masked_array_t = copy.deepcopy(np.array(single_residuals_t))
+        for i,j in enumerate(masked_array_t):
+            idx_of_min = np.argmin(j)
+            masked_array_t[i][idx_of_min] = None
+                
+        noiselevel_result.append(len(np.where(np.isnan(np.diag(masked_array_t)))[0])/len(cidx))
+else:
+    noiselevel_result = np.load('./precalc/noiselevel_result3.npy')
+
+#%% Figure 13A - CS test when noise is added
+
+fig, ax = plt.subplots(figsize=(3,3))
+plt.plot(np.arange(0,3.5,0.5), noiselevel_result, lw=3)
+plt.xlabel(r'$\sigma$', fontsize=15)
+plt.ylabel('% Correct', fontsize=15)
+plt.ylim(0.6, 1.05)
+plt.yticks([0.6, 0.7, 0.8, 0.9, 1.], fontsize=15)
+plt.xticks(fontsize=15)
+plt.show()
+
+
+
 
 #%% Reconstruction of uPN activity from partial MBON responses
 
 if not LOAD:
-    np.random.seed(1234)
+    np.random.seed(1111)
     
     partial = []
     
@@ -1058,7 +1019,7 @@ if not LOAD:
             
             partial_sample = []
             
-            while (sample_run < 10) and not any(partial_sample):
+            while (sample_run < 50) and not any(partial_sample):
                 
                 r_temp = []
                 
@@ -1093,9 +1054,15 @@ if not LOAD:
                 partial_per_size.append(False)
                 
         partial.append(partial_per_size)
-            
+        
+    partial = np.array(partial)
+    for i in np.arange(1, len(partial)):
+        for j in np.arange(len(partial[0])):
+            if partial[i][j] == True:
+                if partial[i-1][j] == False:
+                    partial[i-1][j] = True
 else:
-    partial = np.load(r'./precalc/partial_result.npy')
+    partial = np.load(r'./precalc/partial_result3.npy')
 
 correct_percentage = [1]
 
@@ -1103,7 +1070,7 @@ for p in partial:
     correct_percentage.append(Counter(p).get(True)/(len(master_odor_type) - 1))
 
 
-#%% Supplementary Figure S12 - Partial MBON CS test
+#%% 13B,C - Partial MBON CS test
 
 fig, ax = plt.subplots(figsize=(3,3))
 plt.plot(np.insert(np.arange(50, 20, -5), 0, 56), correct_percentage, lw=3)

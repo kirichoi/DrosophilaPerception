@@ -9,13 +9,13 @@
 # Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing
 #
 # Figures related to uPN activity reconstruction in response to natural odor
-# mixtures (fruits) and odorants at various concentrations are presetned in 
+# mixtures (fruits) and odorants at various concentrations are available in 
 # this Python script.
 # Certain computation can take a long time and pre-computed array files are
 # available.
 # Disable the flag to re-run the computation.
 # CAUTION! - THIS CAN TAKE A LONG TIME!
-# Using the pickled files instead are highly recommended.
+# To view the figures, using the pickled files are highly recommended.
 # 
 # FLAG TO LOAD PRE-COMPUTED FILES #############################################
 LOAD = True
@@ -72,8 +72,8 @@ glo_labelKC[vc5] = 'VM6'
 
 neuron_PNKC_df = pd.read_pickle(r'./data/neuron_PNKC_df.pkl')
 conn_PNKC_df = pd.read_pickle(r'./data/conn_PNKC_df.pkl')
-neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df.pkl')
-conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df.pkl')
+neuron_MBON_df = pd.read_pickle(r'./data/neuron_MBON_df3.pkl')
+conn_MBON_df = pd.read_pickle(r'./data/conn_MBON_df3.pkl')
 
 matrix_KC = connection_table_to_matrix(conn_PNKC_df, 'bodyId')
 matrix_MBON = connection_table_to_matrix(conn_MBON_df, 'bodyId')
@@ -219,15 +219,11 @@ KC_sorted = np.sort(matrix_KC.columns.values)
 KC_sortedidx = np.argsort(matrix_KC.columns.values)
 
 matrix_KC_re = np.array(matrix_KC)[KC_newidx][:,KC_sortedidx]
-matrix_KC_re_df = pd.DataFrame(matrix_KC_re)
-matrix_KC_re_df.columns = matrix_KC.columns.values[KC_sortedidx]
-matrix_KC_re_df.index = KC_newidx_label
-KC_sorted_ids = matrix_KC.columns.values[KC_sortedidx]
 
 MBON_sortedidx = np.argsort(matrix_MBON.columns.values)
 
 matrix_MBONKC = matrix_MBON.loc[KC_sorted]
-matrix_MBONKC = np.array(matrix_MBONKC)[KC_sortedidx][:,MBON_sortedidx]
+matrix_MBONKC = np.array(matrix_MBONKC)[:,MBON_sortedidx]
 
 matrix_MBONKCidx = np.nonzero(np.sum(matrix_MBONKC, axis=0))[0]
 
@@ -326,7 +322,6 @@ for o in master_odor_type:
             truPNactivity[gloidx] = spike[s]
         
     odortruPN.append(truPNactivity)
-    
     
     KCact = np.dot(Psimat, truPNactivity)
     
@@ -450,7 +445,6 @@ for o in natural_odor_type:
     
     natural_allsingleres.append(res.x)
 
-
 conc_single_residuals = []
     
 for l,i in enumerate(natural_allsingleres):
@@ -461,12 +455,11 @@ for l,i in enumerate(natural_allsingleres):
     conc_single_residuals.append(rh_temp)
 
 
-#%% Figure 5A - Sparsity comparison between natural fruit odor mixtures and random mixtures
+#%% Figure 6A - Sparsity comparison between natural fruit odor mixtures and random mixtures
 
-mp = 27
+mp = 25
 
-singlecosine = np.load('./precalc/singlecosine.npy')
-single_residuals = np.load('./precalc/single_residuals.npy')
+single_residuals = np.load('./precalc/single_residuals3.npy')
 
 masked_array1 = copy.deepcopy(np.array(single_residuals))
 for i,j in enumerate(masked_array1):
@@ -493,7 +486,6 @@ for o in master_odor_success:
     hallemallsingletruPNactivity.append(truPNactivity)
 
 if not LOAD:
-    
     np.random.seed(1234)
     
     hallem_allmulttruPNactivity = []
@@ -527,7 +519,7 @@ if not LOAD:
             
         hallem_allmulttruPNactivity.append(alltruPNactivity_temp)
 else:
-    hallem_allmulttruPNactivity = np.load('./precalc/hallem_allmulttruPNactivity_500.npy')
+    hallem_allmulttruPNactivity = np.load('./precalc/hallem_allmulttruPNactivity_500_3.npy')
 
 natural_sparsity_hallem = list(Counter(np.nonzero(np.array(hallemallsingletruPNactivity))[0]).values())
 
@@ -575,7 +567,7 @@ plt.xlabel('$N_{od}$', fontsize=15)
 plt.show()
 
 
-#%% Figure 5D - Residuals for natural fruit odor mixtures 
+#%% Figure 6D - Residuals for natural fruit odor mixtures 
 
 custom_cmap = matplotlib.cm.get_cmap("RdYlBu").copy()
 custom_cmap.set_bad(color='tab:red')
@@ -583,7 +575,8 @@ custom_cmap.set_bad(color='tab:red')
 masked_array = copy.deepcopy(np.array(conc_single_residuals))
 
 fig, ax = plt.subplots(figsize=(3,3))
-im = plt.imshow(masked_array[9:18,9:18], cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1))
+im = plt.imshow(masked_array[9:18,9:18], cmap=custom_cmap, 
+                norm=matplotlib.colors.LogNorm(vmax=1.1), interpolation='None')
 ax.xaxis.set_ticks_position('bottom')
 ax.xaxis.set_label_position('bottom')
 ax.yaxis.set_ticks_position('left')
@@ -596,7 +589,47 @@ cbar.set_ticks([1e0, 1e-4, 1e-8])
 plt.tight_layout()
 plt.show()
 
-#%% Figure 6A - Concentration uPN activity
+
+#%% Figure S4A - Z-scores for natural fruit odor mixtures
+
+zscores = np.abs(scipy.stats.zscore(conc_single_residuals, axis=1))
+
+fig, ax = plt.subplots(figsize=(3,2.5))
+plt.bar(np.arange(len(unu)), np.diag(zscores)[9:18])
+plt.xticks(np.arange(len(unu)), np.array(unu), rotation='vertical', fontsize=13)
+plt.yscale('log')
+plt.yticks(fontsize=15)
+plt.ylabel('$Z$-score', fontsize=15)
+plt.xlim(-1, len(unu))
+plt.ylim(0.25, 11)
+plt.yticks([1, 10], ['$-10^{0}$', '$-10^{1}$'], fontsize=15)
+plt.gca().invert_yaxis()
+plt.tight_layout()
+plt.show()
+
+#%% Figure S4B - Full MBON response profiles for natural mixtures
+
+numpsp = 11
+
+fig, ax = plt.subplots(1, numpsp, figsize=(5,4))
+fig.delaxes(ax[9])
+fig.delaxes(ax[10])
+i1 = 0
+i2 = 0
+for i,j in enumerate(natural_singleinput[9:18]):
+    if i2 == numpsp:
+        i1 += 1
+        i2 = 0
+    ax[i2].set_title(natural_odor_type[9:18][i][:-3], rotation=90, fontsize=13)
+    ax[i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='none', 
+                      vmax=np.max(natural_singleinput[9:18]), vmin=np.min(natural_singleinput[9:18]))
+    ax[i2].set_xticks([])
+    ax[i2].set_yticks([])
+    i2 += 1
+plt.tight_layout()
+plt.show()
+
+#%% Figure 7A - Concentration uPN activity
                                  
 for j,i in enumerate(odor_sort_ind1):
     a = 4.5/len(odor_sort_ind)*len(i)
@@ -616,7 +649,6 @@ for j,i in enumerate(odor_sort_ind1):
     cbar = plt.colorbar(im, fraction=0.3, location='top', pad=0.05)
     cbar.ax.tick_params(labelsize=15)
     plt.show()
-
 
 #%% Odorants at different concentrations
 
@@ -690,7 +722,7 @@ for l,i in enumerate(allsingleres):
     conc_single_residuals.append(rh_temp)
 
 
-#%% Figure 6B - Concentration-dependent perception of odor
+#%% Figure 7B - Concentration-dependent perception of odor
 
 from matplotlib.gridspec import GridSpec
 
@@ -760,48 +792,7 @@ plt.tight_layout()
 plt.show()
 
 
-#%% Supplementary Figure S5 - Z-scores for natural fruit odor mixtures
-
-zscores = np.abs(scipy.stats.zscore(conc_single_residuals, axis=1))
-
-fig, ax = plt.subplots(figsize=(3,2.5))
-plt.bar(np.arange(len(unu)), np.diag(zscores)[9:18])
-plt.xticks(np.arange(len(unu)), np.array(unu), rotation='vertical', fontsize=13)
-plt.yscale('log')
-plt.yticks(fontsize=15)
-plt.ylabel('$Z$-score', fontsize=15)
-plt.xlim(-1, len(unu))
-plt.ylim(0.25, 11, len(unu))
-plt.yticks([1, 10], ['$-10^{0}$', '$-10^{1}$'], fontsize=15)
-plt.gca().invert_yaxis()
-plt.tight_layout()
-plt.show()
-
-
-#%% Supplementary Figure S6 - Full MBON response profiles for natural mixtures
-
-numpsp = 11
-
-fig, ax = plt.subplots(1, numpsp, figsize=(5,4))
-fig.delaxes(ax[9])
-fig.delaxes(ax[10])
-i1 = 0
-i2 = 0
-for i,j in enumerate(natural_singleinput[9:18]):
-    if i2 == numpsp:
-        i1 += 1
-        i2 = 0
-    ax[i2].set_title(natural_odor_type[9:18][i][:-3], rotation=90, fontsize=13)
-    ax[i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='none', 
-                      vmax=np.max(natural_singleinput[9:18]), vmin=np.min(natural_singleinput[9:18]))
-    ax[i2].set_xticks([])
-    ax[i2].set_yticks([])
-    i2 += 1
-plt.tight_layout()
-plt.show()
-
-
-#%% Supplementary Figure S7 - Concentration sparsity
+#%% Figure S5A - Concentration sparsity
 
 conc_sparsity = np.empty((10,4))
 iii = 0
@@ -810,12 +801,20 @@ for j,i in enumerate(hallem_odor_type_conc[:-36]):
     s = i.split(' ')
     if j < 10:
         i = i[:-3]
-        idx = np.where(i == master_odor_type)[0][0]
-        c = len(np.nonzero(master_odor_sensitivity_array[idx])[0])
+        idx = np.where(master_odor_type == i)[0][0]
+        #c = len(np.nonzero(master_odor_sensitivity_array[idx])[0])
+        tar = np.abs(master_odor_sensitivity_array[idx]) > 40
+        c = 0
+        for k in master_PN_type[tar]:
+            c += len(np.where(KC_newidx_label == k)[0])
     else:
-        idx = np.where(i == master_odor_type)[0]
+        idx = np.where(master_odor_type == i)[0]
         if len(idx) > 0:
-            c = len(np.nonzero(master_odor_sensitivity_array[idx[0]])[0])
+            # c = len(np.nonzero(master_odor_sensitivity_array[idx[0]])[0])
+            tar = np.abs(master_odor_sensitivity_array[idx[0]]) > 40
+            c = 0
+            for k in master_PN_type[tar]:
+                c += len(np.where(KC_newidx_label == k)[0])
         else:
             c = 0
     if iii >= 10:
@@ -823,7 +822,8 @@ for j,i in enumerate(hallem_odor_type_conc[:-36]):
     conc_sparsity[iii][int((-1*int(s[-1])-2)/2)] = c
     iii += 1
 
-sid = [7,9,0,2,5,1,8,6,3,4]
+sid = [9,7,0,3,6,2,5,8,1,4]
+sid = [4, 1, 8, 5, 2, 6, 3, 0, 7, 9]
 
 conc_sparsity = conc_sparsity[sid]
 
@@ -848,9 +848,9 @@ facecolors = facecolors[np.random.choice(np.arange(10), 10, replace=False)]
 ax.bar3d(np.flip(y), x, np.zeros(len(conc_sparsity.flatten())), 1, 0.5, conc_sparsity.flatten(), 
          color=np.repeat(facecolors, 4, axis=0), alpha=0.7, shade=False)
 ax.set(ylim=(-0.5, 3.5), xlim=(-.5, 9.), zlim=(-1, 40))
-ax.set_yticks(np.arange(4), fontsize=13)
+ax.set_yticks(np.arange(4))
 ax.set_yticklabels(np.flip(['$10^{-2}$','$10^{-4}$','$10^{-6}$','$10^{-8}$']), fontsize=13)
-ax.set_xticks(np.arange(10), fontsize=13)
+ax.set_xticks(np.arange(10))
 ax.set_xticklabels(np.flip(nun), fontsize=12, ha='right', va='baseline')
 for xtick, color in zip(ax.get_xticklabels(), np.flip(facecolors,axis=0)):
     xtick.set_color(color)
@@ -863,12 +863,12 @@ ax.set_zlabel('Sparsity $K$', fontsize=15)
 ax.set_ylabel('Dilution', fontsize=15, labelpad=10)
 ax.set_box_aspect((5,5,3))
 plt.tight_layout()
-ax.view_init(40, -35)
-ax.dist = 13
+ax.view_init(40, -40)
+ax.set_box_aspect(None, zoom=0.8)
 plt.show()
 
 
-#%% Supplementary Figure S8 - Residuals for undiluted natural fruit odor mixtures
+#%% Figure S5B - Residuals for undiluted natural fruit odor mixtures
 
 fig, ax = plt.subplots(figsize=(3,3))
 im = plt.imshow(masked_array[:9,:9], cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1, vmin=1e-8))
@@ -885,7 +885,7 @@ plt.tight_layout()
 plt.show()
 
 
-#%% Supplementary Figure S9 - Full MBON response profiles for odorants at different concentrations
+#%% Figure S5C - Full MBON response profiles for odorants at different concentrations
 
 numpsp = 11
 
