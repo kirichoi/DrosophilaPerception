@@ -472,7 +472,7 @@ idx = np.ceil(len(master_odor_type)/3).astype(int)
 fig, ax = plt.subplots(figsize=(12, 2.5))
 for j,i in enumerate(zscores_DAN):
     x = np.random.normal(0, 0.1, size=idx)
-    ax.scatter(np.arange(idx)+x, np.diag(i)[:idx], color=custom_cmap(j), alpha=0.5, s=20)
+    ax.scatter(np.arange(idx)+x, np.diag(i)[:idx], color=custom_cmap(j), alpha=0.5, s=30, linewidths=0)
 ax.scatter(np.arange(idx), np.diag(zscores)[:idx], color='k', alpha=1, marker='*', s=50)
 ax.set_xticks(np.arange(idx), master_odor_type[:idx], rotation=45, fontsize=10, ha='right')
 for xtick, color in zip(ax.get_xticklabels(), np.array(master_odor_color)[:idx]):
@@ -486,7 +486,7 @@ plt.show()
 fig, ax = plt.subplots(figsize=(12, 2.5))
 for j,i in enumerate(zscores_DAN):
     x = np.random.normal(0, 0.1, size=idx)
-    ax.scatter(np.arange(idx)+x, np.diag(i)[idx:2*idx], color=custom_cmap(j), alpha=0.5, s=20)
+    ax.scatter(np.arange(idx)+x, np.diag(i)[idx:2*idx], color=custom_cmap(j), alpha=0.5, s=30, linewidths=0)
 ax.scatter(np.arange(idx), np.diag(zscores)[idx:2*idx], color='k', alpha=1, marker='*', s=50)
 ax.set_xticks(np.arange(idx), master_odor_type[idx:2*idx], rotation=45, fontsize=10, ha='right')
 for xtick, color in zip(ax.get_xticklabels(), np.array(master_odor_color)[idx:2*idx]):
@@ -500,7 +500,7 @@ plt.show()
 fig, ax = plt.subplots(figsize=(12, 2.5))
 for j,i in enumerate(zscores_DAN):
     x = np.random.normal(0, 0.1, size=idx-2)
-    ax.scatter(np.arange(idx-2)+x, np.diag(i)[2*idx:], color=custom_cmap(j), alpha=0.5, s=20)
+    ax.scatter(np.arange(idx-2)+x, np.diag(i)[2*idx:], color=custom_cmap(j), alpha=0.5, s=30, linewidths=0)
 ax.scatter(np.arange(idx-2), np.diag(zscores)[2*idx:], color='k', alpha=1, marker='*', s=50)
 ax.set_xticks(np.arange(idx-2), master_odor_type[2*idx:], rotation=45, fontsize=10, ha='right')
 for xtick, color in zip(ax.get_xticklabels(), np.array(master_odor_color)[2*idx:]):

@@ -327,10 +327,6 @@ if not LOAD:
         
         y = singleinput[i]
         
-        rid = np.random.choice(np.arange(len(y)), 11, replace=False)
-        what = np.random.choice([2, 0.5], 11)
-        y[rid] = what*y[rid]
-        
         bounds = scipy.optimize.Bounds(lb=-np.inf, ub=np.inf)
         constr = ({'type': 'eq', 'fun': lambda x: Theta @ x - y})
         
@@ -526,7 +522,7 @@ box1 = plt.boxplot(single_residuals[55], positions=[0],
                    showfliers=False,
                    boxprops={'fill': None})
 x = np.random.normal(0, 0.04, size=len(single_residuals))
-plt.scatter(x, single_residuals[55], marker='.', color='tab:blue', alpha=0.5, s=60)
+plt.scatter(x, single_residuals[55], marker='.', color='tab:blue', alpha=0.5, s=100, edgecolors='none')
 plt.scatter(x[55], single_residuals[55][55], marker='.', color='tab:red', s=60)
 plt.scatter(x[56], single_residuals[55][56], marker='.', color='tab:orange', s=60)
 box2 = plt.boxplot(single_residuals[56], positions=[0.5], 
@@ -536,7 +532,7 @@ box2 = plt.boxplot(single_residuals[56], positions=[0.5],
                    showfliers=False,
                    boxprops={'fill': None})
 x = np.random.normal(0.5, 0.04, size=len(single_residuals))
-plt.scatter(x, single_residuals[56], marker='.', color='tab:blue', alpha=0.4, s=60)
+plt.scatter(x, single_residuals[56], marker='.', color='tab:blue', alpha=0.4, s=100, edgecolors='none')
 plt.scatter(x[56], single_residuals[56][56], marker='.', color='tab:green', s=60)
 plt.scatter(x[55], single_residuals[56][55], marker='.', color='tab:purple', s=60)
 
@@ -564,7 +560,7 @@ custom_cmap = matplotlib.cm.get_cmap("RdYlBu").copy()
 custom_cmap.set_bad(color='tab:red')
 
 fig, ax = plt.subplots(figsize=(16,16))
-im = plt.imshow(masked_array, cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1), interpolation='none')
+im = plt.imshow(masked_array, cmap=custom_cmap, norm=matplotlib.colors.LogNorm(vmax=1.1), interpolation='nearest')
 ax.xaxis.set_ticks_position('bottom')
 ax.xaxis.set_label_position('bottom')
 ax.yaxis.set_ticks_position('left')
@@ -825,6 +821,7 @@ numpsp = 33
 
 fig, ax = plt.subplots(3, numpsp, figsize=(20,23))
 fig.delaxes(ax[2][31])
+
 fig.delaxes(ax[2][32])
 i1 = 0
 i2 = 0
@@ -835,7 +832,7 @@ for i,j in enumerate(singleinput):
     ax[i1][i2].set_title(master_odor_type[i], rotation=90, fontsize=20, 
                          color=master_odor_color[i], pad=10)
     ax[i1][i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', 
-                      interpolation='none', vmax=np.max(singleinput), 
+                      interpolation='nearest', vmax=np.max(singleinput), 
                       vmin=np.min(singleinput))
     ax[i1][i2].set_xticks([])
     ax[i1][i2].set_yticks([])

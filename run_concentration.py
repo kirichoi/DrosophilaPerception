@@ -576,7 +576,7 @@ masked_array = copy.deepcopy(np.array(conc_single_residuals))
 
 fig, ax = plt.subplots(figsize=(3,3))
 im = plt.imshow(masked_array[9:18,9:18], cmap=custom_cmap, 
-                norm=matplotlib.colors.LogNorm(vmax=1.1), interpolation='None')
+                norm=matplotlib.colors.LogNorm(vmax=1.1), interpolation='nearest')
 ax.xaxis.set_ticks_position('bottom')
 ax.xaxis.set_label_position('bottom')
 ax.yaxis.set_ticks_position('left')
@@ -621,7 +621,7 @@ for i,j in enumerate(natural_singleinput[9:18]):
         i1 += 1
         i2 = 0
     ax[i2].set_title(natural_odor_type[9:18][i][:-3], rotation=90, fontsize=13)
-    ax[i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='none', 
+    ax[i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='nearest', 
                       vmax=np.max(natural_singleinput[9:18]), vmin=np.min(natural_singleinput[9:18]))
     ax[i2].set_xticks([])
     ax[i2].set_yticks([])
@@ -902,7 +902,7 @@ for i,j in enumerate(singleinput[-len(odor_sort_ind):]):
     else:
         lab = master_odor_type[odor_sort_ind][i]
     ax[i1][i2].set_title(lab, rotation=90, fontsize=13)
-    ax[i1][i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='none', 
+    ax[i1][i2].imshow(j[np.newaxis].T, cmap='binary', aspect='auto', interpolation='nearest', 
                       vmax=np.max(singleinput[-len(odor_sort_ind):]), 
                       vmin=np.min(singleinput[-len(odor_sort_ind):]))
     ax[i1][i2].set_xticks([])

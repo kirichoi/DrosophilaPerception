@@ -104,7 +104,7 @@ MBON_newidx_label = np.array(MBONtype)[MBONbid_idx][matrix_MBONKCidx]
 
 fig, ax = plt.subplots(figsize=(10,20))
 ax.set_yticks([])
-im = plt.imshow(matrix_KC_re.T, cmap='binary', aspect='auto', interpolation='none', 
+im = plt.imshow(matrix_KC_re.T, cmap='binary', aspect='auto', interpolation='nearest', 
                 norm=matplotlib.colors.Normalize(vmax=15))
 ax.xaxis.set_ticks_position('bottom')
 ax.xaxis.set_label_position('bottom')
@@ -118,7 +118,7 @@ plt.show()
 
 fig, ax = plt.subplots(figsize=(4.7,20))
 ax.set_yticks([])
-im = plt.imshow(matrix_MBONKC, cmap='binary', aspect='auto', interpolation='none', 
+im = plt.imshow(matrix_MBONKC, cmap='binary', aspect='auto', interpolation='nearest', 
                 norm=matplotlib.colors.Normalize(vmax=10))
 ax.xaxis.set_ticks_position('bottom')
 ax.xaxis.set_label_position('bottom')
