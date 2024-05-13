@@ -396,15 +396,13 @@ for i in range(5):
         ax[i].set_xticks(np.arange(numpsp))
     ax[i].set_xticklabels(master_odor_type[i*numpsp:(i+1)*numpsp], rotation=30, ha='right', fontsize=15)
     ax[i].set_yticks([0, 0.5, 1, 1.5])
-    ax[i].set_yticklabels([0, 0.5, 1, 1.5], fontsize=15)
+    ax[i].set_yticklabels([0, 0.5, 1, 1.5], fontsize=20)
     for xtick, color in zip(ax[i].get_xticklabels(), master_odor_color[i*numpsp:(i+1)*numpsp]):
         xtick.set_color(color)
 plt.tight_layout()
 plt.show()
 
 #%% Figure 5A - Z-scores for single odorants
-
-from scipy import stats
 
 zscores = -scipy.stats.zscore(single_residuals, axis=1)
 
@@ -554,7 +552,7 @@ plt.yticks([0, 0.5, 1], fontsize=13)
 plt.show()
 
 
-#%% Figure S3 - Residuals for single odorants
+#%% Figure S3 - Residuals for single odorants in matrix form
 
 custom_cmap = matplotlib.cm.get_cmap("RdYlBu").copy()
 custom_cmap.set_bad(color='tab:red')
@@ -840,7 +838,7 @@ for i,j in enumerate(singleinput):
 fig.tight_layout()
 plt.show()
 
-#%% Figure 12A - Comparison between uPN and MBON response using Euclidean distance
+#%% Figure 10A - Comparison between uPN and MBON response using Euclidean distance
 
 from sklearn import metrics
 
@@ -982,7 +980,7 @@ if not LOAD:
 else:
     noiselevel_result = np.load('./precalc/noiselevel_result3.npy')
 
-#%% Figure 13A - CS test when noise is added
+#%% Figure S6 - CS test when noise is added
 
 fig, ax = plt.subplots(figsize=(3,3))
 plt.plot(np.arange(0,3.5,0.5), noiselevel_result, lw=3)
@@ -992,8 +990,6 @@ plt.ylim(0.6, 1.05)
 plt.yticks([0.6, 0.7, 0.8, 0.9, 1.], fontsize=15)
 plt.xticks(fontsize=15)
 plt.show()
-
-
 
 
 #%% Reconstruction of uPN activity from partial MBON responses
@@ -1067,7 +1063,7 @@ for p in partial:
     correct_percentage.append(Counter(p).get(True)/(len(master_odor_type) - 1))
 
 
-#%% 13B,C - Partial MBON CS test
+#%% Fig 15 - Partial MBON CS test
 
 fig, ax = plt.subplots(figsize=(3,3))
 plt.plot(np.insert(np.arange(50, 20, -5), 0, 56), correct_percentage, lw=3)

@@ -802,7 +802,6 @@ for j,i in enumerate(hallem_odor_type_conc[:-36]):
     if j < 10:
         i = i[:-3]
         idx = np.where(master_odor_type == i)[0][0]
-        #c = len(np.nonzero(master_odor_sensitivity_array[idx])[0])
         tar = np.abs(master_odor_sensitivity_array[idx]) > 40
         c = 0
         for k in master_PN_type[tar]:
@@ -810,7 +809,6 @@ for j,i in enumerate(hallem_odor_type_conc[:-36]):
     else:
         idx = np.where(master_odor_type == i)[0]
         if len(idx) > 0:
-            # c = len(np.nonzero(master_odor_sensitivity_array[idx[0]])[0])
             tar = np.abs(master_odor_sensitivity_array[idx[0]]) > 40
             c = 0
             for k in master_PN_type[tar]:

@@ -538,7 +538,7 @@ if not LOAD:
 else:
     single_residuals_sigmoid = np.load('./precalc/single_residuals_sigmoid_3.npy')
 
-#%% Figure 9A - Z-scores for linear vs nonlinear
+#%% Fig 11A - Z-scores for linear vs nonlinear
 
 single_residuals = np.load('./precalc/single_residuals3.npy')
 zscores = -scipy.stats.zscore(single_residuals, axis=1)
@@ -572,7 +572,7 @@ plt.gca().invert_yaxis()
 plt.legend(['ReLU', 'SNIC', 'Sigmoid'], fontsize=13, loc=4)
 plt.show()
 
-#%% Figure 9B - self residuals for linear vs nonlinear
+#%% Fig 11B - self residuals for linear vs nonlinear
 
 ps_ReLU, pval_ReLU = stats.pearsonr(np.diag(single_residuals), np.diag(single_residuals_ReLU))
 ps_SNIC, pval_SNIC = stats.pearsonr(np.diag(single_residuals), np.diag(single_residuals_SNIC))

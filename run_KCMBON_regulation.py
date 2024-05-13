@@ -8,9 +8,10 @@
 #
 # Unveiling the Odor Representation in the Inner Brain of Drosophila through Compressed Sensing
 #
-# Figures related to testing DAN-based modulation of KC-MBON connectivity are 
-# available in this Python script. Certain computation can take a long time and
-# pre-computed array files are available.
+# Figures related to testing APL-based lateral inhibition to KC activity and
+# DAN-based modulation of KC-MBON connectivity are available in this Python 
+# script. Certain computation can take a long time and pre-computed array files
+# are available.
 # Disable the flag to re-run the computation.
 # CAUTION! - THIS CAN TAKE A LONG TIME!
 # To view the figures, using the pickled files are highly recommended.
@@ -25,7 +26,6 @@ import os
 import numpy as np
 import scipy
 from scipy.optimize import minimize
-from scipy import stats
 import pandas as pd
 from neuprint.utils import connection_table_to_matrix
 import matplotlib
@@ -43,6 +43,7 @@ PNKC_df = pd.read_pickle(r'./data/PNKC_df.pkl')
 MBON_df = pd.read_pickle(r'./data/MBON_df3.pkl')
 PAM_df = pd.read_pickle(r'./data/PAM_df.pkl')
 PPL_df = pd.read_pickle(r'./data/PPL_df.pkl')
+APL_df = pd.read_pickle(r'./data/APL_df.pkl')
 
 PNKCbid = list(PNKC_df['bodyId'])
 PNKCinstance = list(PNKC_df['instance'])
@@ -80,11 +81,14 @@ PAMKCneuron_df = pd.read_pickle(r'./data/neuron_PAMKC_df.pkl')
 PAMKCconn_df = pd.read_pickle(r'./data/conn_PAMKC_df.pkl')
 PPLKCneuron_df = pd.read_pickle(r'./data/neuron_PPLKC_df.pkl')
 PPLKCconn_df = pd.read_pickle(r'./data/conn_PPLKC_df.pkl')
+KCAPLneuron_df = pd.read_pickle(r'./data/neuron_KCAPL_df.pkl')
+KCAPLconn_df = pd.read_pickle(r'./data/conn_KCAPL_df.pkl')
 
 matrix_KC = connection_table_to_matrix(conn_PNKC_df, 'bodyId')
 matrix_MBON = connection_table_to_matrix(conn_MBON_df, 'bodyId')
 matrix_PAMKC = connection_table_to_matrix(PAMKCconn_df, 'bodyId')
 matrix_PPLKC = connection_table_to_matrix(PPLKCconn_df, 'bodyId')
+matrix_KCAPL = connection_table_to_matrix(KCAPLconn_df, 'bodyId')
 
 hallem_odor_sensitivity_raw = pd.read_excel('./data/Hallem_and_Carlson_2006_TS1.xlsx')
 hallem_odor_sensitivity_raw = hallem_odor_sensitivity_raw.fillna(0)
@@ -181,6 +185,7 @@ matrix_MBONKC = matrix_MBONKC[:,matrix_MBONKCidx]
 matrix_PAMKC = matrix_PAMKC[KC_sorted]
 matrix_PPLKC[705091769] = 0
 matrix_PPLKC = matrix_PPLKC[KC_sorted]
+matrix_KCAPL = matrix_KCAPL.loc[KC_sorted]
 
 odor_chemtype_dict = {'ammonium hydroxide': 'amines', 'putrescine' : 'amines',  
                       'cadaverine': 'amines', 'g-butyrolactone': 'lactones', 
@@ -267,11 +272,17 @@ for o in master_odor_type:
     else:
         master_odor_color.append('#000000')
 
+Smat = np.zeros(np.shape(matrix_MBONKC.T))
+
+for i in range(len(matrix_MBONKC.T)):
+    Smat[i] = matrix_MBONKC.T[i]/np.linalg.norm(matrix_MBONKC.T[i])
 
 Psimat = np.zeros(np.shape(matrix_KC_re.T))
 
 for i in range(len(matrix_KC_re)):
     Psimat[:,i] = matrix_KC_re[i]/np.linalg.norm(matrix_KC_re[i])
+
+Theta = np.matmul(Smat, Psimat)
 
 allsingletruPNactivity = []
 
@@ -436,7 +447,7 @@ for r in single_residuals_DAN:
     ncidx_DAN.append(ncidx)
     
     
-#%% Figure 8 - Effect of DANs on CS
+#%% Fig 14 - Effect of DANs on CS
 
 single_residuals = np.load('./precalc/single_residuals3.npy')
 zscores = -scipy.stats.zscore(single_residuals, axis=1)
@@ -510,4 +521,97 @@ ax.set_yticks([1, 10], ['$-10^{0}$', '$-10^{1}$'], fontsize=15)
 ax.set_ylabel('$Z$-score', fontsize=15)
 ax.set_xlim(-1, idx)
 plt.show()
+
+#%% APL model
+
+if not LOAD:
+    np.random.seed(1234)
+    
+    allsingleres_APL = np.zeros((len(master_odor_type),len(KC_newidx_label)))
+    singleinput_APL = np.zeros((len(master_odor_type),np.shape(matrix_MBONKC)[1]))
+    Smat_APL = np.zeros((np.shape(matrix_MBONKC)[1],np.shape(matrix_MBONKC)[0]))
+    
+    for i,o in enumerate(master_odor_type):
+        print(o)
+        
+        truPNactivity = allsingletruPNactivity[i]
+        
+        KC = np.dot(Psimat, truPNactivity)
+        
+        sKC = np.sum(KC/np.linalg.norm(KC))
+        
+        KCs = KC*np.exp(-np.abs(sKC)/15)
+        
+        y = np.dot(KCs, Smat.T)
+        
+        singleinput_APL[i] = y
+        
+        bounds = scipy.optimize.Bounds(lb=-np.inf, ub=np.inf)
+        constr = ({'type': 'eq', 'fun': lambda x: Theta @ x - y})
+        
+        x0 = np.linalg.pinv(Theta) @ y
+        
+        res = minimize(L1norm, x0, method='SLSQP', bounds=bounds, constraints=constr, options={'maxiter': 10000})
+        
+        allsingleres_APL[i] = res.x
+        
+    single_residuals_APL = []
+        
+    for l,i in enumerate(allsingleres_APL):
+        r_temp = []
+        for k,j in enumerate(singleinput_APL):
+            gidx = np.where(np.abs(allsingletruPNactivity[k]) >= 40)[0]
+            r_temp.append(np.linalg.norm(j-np.dot(Smat,np.dot(Psimat[:,gidx], i[gidx])))/np.linalg.norm(j))
+        single_residuals_APL.append(r_temp)
+else:
+    single_residuals_APL = np.load('./precalc/single_residuals_APL.npy')
+
+masked_array = copy.deepcopy(np.array(single_residuals_APL))
+masked_array1 = copy.deepcopy(np.array(single_residuals_APL))
+for i,j in enumerate(masked_array1):
+    idx_of_min = np.argmin(j)
+    masked_array1[i][idx_of_min] = None
+
+natural_sparsity = list(Counter(np.nonzero(np.array(allsingletruPNactivity))[0]).values())
+
+x = np.arange(len(master_odor_type))
+cidx = np.where(np.isnan(np.diag(masked_array1)))[0]
+ncidx = np.delete(x,cidx)
+
+#%% Fig 13 - Effect of APL-based lateral inhibition on CS
+
+zscores_APL = -scipy.stats.zscore(single_residuals_APL, axis=1)
+
+fig = plt.figure(figsize=(2,3))
+plt.boxplot([np.diag(zscores)[:-1], np.diag(zscores_APL)[:-1]],
+            positions=[0,0.75],
+            showfliers=False, zorder=100)
+plt.scatter(np.repeat(0, len(zscores)-1), np.diag(zscores)[:-1], s=10, 
+            edgecolors='none', alpha=0.5, facecolors='gray')
+plt.scatter(np.repeat(0.75, len(zscores)-1), np.diag(zscores_APL)[:-1], s=10, 
+            edgecolors='none', alpha=0.5, facecolors='gray')
+plt.xticks([0,0.75], ['No APL', 'APL'], 
+           fontsize=15)
+
+for i in range(len(zscores)-1):
+    plt.plot([0, 0.75], [np.diag(zscores)[i], np.diag(zscores_APL)[i]], 
+             c='gray', alpha=0.5, lw=0.5)
+    
+plt.ylabel('$Z$-score', fontsize=15)
+plt.yscale('log')
+plt.yticks([0.1, 1, 10], ['$-10^{-1}$', '$-10^{0}$', '$-10^{1}$'], fontsize=15)
+plt.ylim(0.05, 30)
+plt.gca().invert_yaxis()
+plt.xlim(-0.35, 1.1)
+plt.show()
+
+print('wilcoxon')
+print(scipy.stats.wilcoxon(np.diag(zscores)[:-1], np.diag(zscores_APL)[:-1], alternative='less'))
+
+print('mannwhitneyu')
+print(scipy.stats.mannwhitneyu(np.diag(zscores)[:-1], np.diag(zscores_APL)[:-1], alternative='less'))
+
+
+
+
 

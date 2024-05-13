@@ -22,7 +22,8 @@ Below is a short description of what each files and folders contain:
 - *run_concentration.py*: Python script to perform analysis on natural odor mixtures and odorants at various concentrations.
 - *run_MBON_raw.py*: Python script to perform analysis on raw MBON response profiles including PCA, t-SNE, etc.
 - *run_nonlinear.py*: Python script to perform analysis on the nonlinear synaptic transmission.
-- *run_MBON_regulation.py*: Python script to perform analysis on the effects of DAN-based modulation to KC-MBON connectivity.
+- *run_random.py*: Python script to perform analysis on random connectivity matrices.
+- *run_KCMBON_regulation.py*: Python script to perform analysis on the effects of APL-based lateral inhibition to KC activity and DAN-based modulation to KC-MBON connectivity.
 - *check_connectivity.py*: Python script to plot connectivity matrices and perform condition tests.
 - *import_neuprint.py*: Python script that querys the neurons and connectivities from the neuPrint database.
 - *data/*: 
@@ -32,6 +33,7 @@ Below is a short description of what each files and folders contain:
     - *MBON_df.pkl*: a pickled dataframe listing MBONs.
 	- *PAM_df.pkl*: a pickled dataframe listing PAMs.
 	- *PPL_df.pkl*: a pickled dataframe listing PPL1s.
+	- *APL_df.pkl*: a pickled dataframe listing APL.
     - *neuron_PNKC_df.pkl*: a pickled dataframe listing uPNs and KCs with connections.
     - *conn_PNKC_df.pkl*: a pickled dataframe listing connectivity between uPNs and KCs.
 	- *neuron_MBON_df.pkl*: a pickled dataframe listing KCs and MBONs with connections.
@@ -40,6 +42,8 @@ Below is a short description of what each files and folders contain:
     - *conn_PAMKC_df.pkl*: a pickled dataframe listing connectivity between PAMs and KCs.
 	- *neuron_PPLKC_df.pkl*: a pickled dataframe listing PPL1s with connections.
     - *conn_PPLKC_df.pkl*: a pickled dataframe listing connectivity between PPL1s and KCs.
+	- *neuron_KCAPL_df.pkl*: a pickled dataframe listing KCs and APL with connections.
+    - *conn_KCAPL_df.pkl*: a pickled dataframe listing connectivity between KCs and APL.
 	- *SNIC_resp.npy*: a numpy array containing SNIC response profile.
 - *precalc/*: a folder containing pre-computed outputs for a number of computations that may take a long time to complete. The Python scripts prioritize using these pre-computed outputs but this behavior can be overiden by **LOAD** flag to re-run everything. ***WARNING -- THIS CAN TAKE A VERY LONG TIME!***
 

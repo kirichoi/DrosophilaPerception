@@ -264,7 +264,7 @@ MBONodorfeatures = pd.DataFrame(singleinput, index=master_odor_type)
 MBONf = MBONodorfeatures.values
 MBONf = StandardScaler().fit_transform(MBONf)
 
-#%% Figure S12B - PCA using uPN and MBON response profiles
+#%% Fig 10B - PCA using uPN and MBON response profiles
 
 pca3 = PCA(n_components=10)
 pcomp3 = pca3.fit_transform(PNf)
@@ -315,7 +315,7 @@ ax.set_box_aspect(None, zoom=0.8)
 plt.show()
 
 
-#%% Figure S12C - t-SNE using uPN and MBON response profiles
+#%% Fig 10C - t-SNE using uPN and MBON response profiles
 
 X_embedded3  = manifold.TSNE(n_components=2, learning_rate='auto',
                             init='pca', perplexity=15).fit_transform(PNf)

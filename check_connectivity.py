@@ -127,7 +127,7 @@ ax.yaxis.set_label_position('left')
 plt.xticks(np.arange(len(MBON_newidx_label)), np.array(MBON_newidx_label), rotation='vertical', fontsize=5)
 plt.show()
 
-#%% Figure 10 - Relaxed coherence
+#%% Figure 8 - Relaxed coherence
 
 Smat = np.zeros(np.shape(matrix_MBONKC.T))
 
